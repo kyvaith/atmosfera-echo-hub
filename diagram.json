@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "author": "Tomasz Witke",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-s3-devkitc-1", "id": "esp", "top": 19.02, "left": -91.43, "attrs": {} },
+    {
+      "type": "board-ili9341-cap-touch",
+      "id": "lcd1",
+      "top": 101.88,
+      "left": -478.34,
+      "rotate": 270,
+      "attrs": { "flashSize": "16", "psramSize": "8", "psramType": "octal", "cpuFrequency": "max" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "lcd1:GND", "esp:GND.1", "black", [ "h115.2", "v-38.4" ] ],
+    [ "lcd1:VCC", "esp:3V3.2", "red", [ "h105.6", "v-240" ] ],
+    [ "lcd1:LED", "esp:3V3.1", "red", [ "h19.2", "v-182.4", "h259.25" ] ],
+    [ "lcd1:SDA", "esp:4", "blue", [ "h28.8", "v-124.8" ] ],
+    [ "lcd1:SCL", "esp:5", "blue", [ "h38.4", "v-124.8" ] ],
+    [ "lcd1:MISO", "esp:6", "green", [ "h48", "v-124.8" ] ],
+    [ "lcd1:SCK", "esp:7", "green", [ "h57.6", "v-134.4" ] ],
+    [ "lcd1:MOSI", "esp:15", "green", [ "h67.2", "v-134.4" ] ],
+    [ "lcd1:D/C", "esp:16", "green", [ "h76.8", "v-134.4" ] ],
+    [ "lcd1:RST", "esp:17", "green", [ "h86.4", "v-134.4" ] ],
+    [ "lcd1:CS", "esp:18", "green", [ "h96", "v-134.4" ] ]
+  ],
+  "dependencies": {}
+}

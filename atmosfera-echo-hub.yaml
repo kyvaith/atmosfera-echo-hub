@@ -1,0 +1,222 @@
+esphome:
+  # Name and description generatoed by ChatGPT
+  name: 'atmosfera-echo-hub'
+  name_add_mac_suffix: true
+  friendly_name: 'Atmosfera Echo Hub'
+  comment: 'The Atmosfera Echo Hub is the ultimate Home Assistant companion, seamlessly integrating voice control, climate management, and smart device connectivity. Designed to create a harmonious living environment, this multifunctional hub combines advanced presence and climate sensors with a powerful voice-controlled satellite speaker, allowing you to effortlessly manage your home. With built-in ZigBee and Matter support, the Atmosfera Echo Hub connects a wide range of smart devices to Home Assistant, ensuring a cohesive ecosystem. Its intuitive voice assistant responds to your commands, enabling you to adjust settings, monitor conditions, and control devices with ease. Experience the future of home automation with the Atmosfera Echo Hub, where comfort, connectivity, and control converge.'
+  project:
+    name: 'kyvaith.AtmosferaEchoHub'
+    version: 'dev'
+  platformio_options:
+    board_build.flash_mode: dio
+  area: 'Living Room'
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+# Required to achieve sufficient PSRAM bandwidth
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: y
+      CONFIG_ESP32S3_DATA_CACHE_64KB: y
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: y
+      CONFIG_ESP32S3_SPIRAM_SUPPORT: y
+      CONFIG_AUDIO_BOARD_CUSTOM: y
+      CONFIG_ESP32_S3_BOX_3_BOARD: y
+      CONFIG_SPIRAM: y
+      CONFIG_SPIRAM_MODE_OCT: y
+      CONFIG_SPIRAM_SPEED_80M: y
+# Required to get the latest RGB driver
+    platform_version: 6.8.1
+    version: 5.3.1
+
+# Set PSRAM parameters
+#psram:
+#  mode: octal
+#  speed: 80MHz
+
+dashboard_import:
+  package_import_url: github://kyvaith/AtmosferaEchoHub/AtmosferaEchoHub.yaml@main
+  import_full_config: true
+
+qr_code:
+  - id: qr_hotspot
+    value: "WIFI:S:${name};T:WPA;P:${name};;"
+  - id: qr_esphome
+    value: https://my.home-assistant.io/redirect/config_flow_start/?domain=esphome 
+
+# Enable Captive Portal AP
+wifi:
+  ssid: Wokwi-GUEST
+  ap:
+    ssid: ${device_name}
+    password: ${device_name}
+  on_connect:
+    - delay: 5s  # Gives time for improv results to be transmitted
+    - ble.disable:
+  on_disconnect:
+    - ble.enable:
+
+esp32_improv:
+  authorizer: none
+
+# Enable Home Assistant API
+api:
+
+# Allow OTA updates
+ota:
+  platform: esphome
+
+# Enable logging
+logger:
+
+# Enable Captive Portal page
+captive_portal:
+
+spi:
+ clk_pin: 7
+ mosi_pin: 15
+ miso_pin: 6
+
+i2c:
+  sda: 4
+  scl: 5
+ 
+display:
+  - platform: ili9xxx
+    model: TFT 2.4
+    cs_pin: 18
+    dc_pin: 16
+    reset_pin: 17
+    rotation: 270
+    id: touchscreen1
+    invert_colors: false
+    auto_clear_enabled: false
+    update_interval: never
+    dimensions:
+      height: 240
+      width: 240
+      offset_height: 55
+
+touchscreen:
+  platform: ft63x6
+  display: touchscreen1
+  calibration:
+    x_max: 240
+    y_max: 320
+  transform:
+    mirror_x: true
+    mirror_y: true
+
+sensor:
+  - platform: homeassistant
+    id: cover_myroom_pos
+    entity_id: cover.myroom
+    attribute: current_position
+    on_value:
+      - if:
+          condition:
+            lambda: |-
+              return x == 100;
+          then:
+            - lvgl.widget.update:
+                id: cov_up_myroom
+                text_opa: 60%
+          else:
+            - lvgl.widget.update:
+                id: cov_up_myroom
+                text_opa: 100%
+      - if:
+          condition:
+            lambda: |-
+              return x == 0;
+          then:
+            - lvgl.widget.update:
+                id: cov_down_myroom
+                text_opa: 60%
+          else:
+            - lvgl.widget.update:
+                id: cov_down_myroom
+                text_opa: 100%
+
+text_sensor:
+  - platform: homeassistant
+    id: cover_myroom_state
+    entity_id: cover.myroom
+    on_value:
+      - if:
+          condition:
+            lambda: |-
+              return ((0 == x.compare(std::string{"opening"})) or (0 == x.compare(std::string{"closing"})));
+          then:
+            - lvgl.label.update:
+                id: cov_stop_myroom
+                text: "STOP"
+          else:
+            - lvgl.label.update:
+                id: cov_stop_myroom
+                text:
+                  format: "%.0f%%"
+                  args: [ 'id(cover_myroom_pos).get_state()' ]
+
+lvgl:
+  buffer_size: 80%
+  pages:
+    - id: room_page
+      widgets:
+        - label:
+            x: 10
+            y: 6
+            width: 70
+            text: "My room"
+            text_align: CENTER
+        - button:
+            x: 10
+            y: 30
+            width: 70
+            height: 68
+            widgets:
+              - label:
+                  id: cov_up_myroom
+                  align: CENTER
+                  text: "\uF077"
+            on_press:
+              then:
+                - homeassistant.action:
+                    action: cover.open
+                    data:
+                      entity_id: cover.myroom
+        - button:
+            x: 10
+            y: 103
+            width: 70
+            height: 68
+            widgets:
+              - label:
+                  id: cov_stop_myroom
+                  align: CENTER
+                  text: STOP
+            on_press:
+              then:
+                - homeassistant.action:
+                    action: cover.stop
+                    data:
+                      entity_id: cover.myroom
+        - button:
+            x: 10
+            y: 178
+            width: 70
+            height: 68
+            widgets:
+              - label:
+                  id: cov_down_myroom
+                  align: CENTER
+                  text: "\uF078"
+            on_press:
+              then:
+                - homeassistant.action:
+                    action: cover.close
+                    data:
+                      entity_id: cover.myroom
