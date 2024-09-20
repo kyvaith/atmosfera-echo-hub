@@ -1,5 +1,4 @@
 esphome:
-  # Name and description generatoed by ChatGPT
   name: 'atmosfera-echo-hub'
   name_add_mac_suffix: true
   friendly_name: 'Atmosfera Echo Hub'
@@ -7,13 +6,10 @@ esphome:
   project:
     name: 'kyvaith.AtmosferaEchoHub'
     version: 'dev'
-  platformio_options:
-    board_build.flash_mode: dio
   area: 'Living Room'
 
 esp32:
-  board: esp32-s3-devkitc-1
-  variant: esp32s3
+  board: esp32s3box
   flash_size: 16MB
   framework:
     type: esp-idf
@@ -22,20 +18,17 @@ esp32:
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: y
       CONFIG_ESP32S3_DATA_CACHE_64KB: y
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: y
-      CONFIG_ESP32S3_SPIRAM_SUPPORT: y
       CONFIG_AUDIO_BOARD_CUSTOM: y
-      CONFIG_ESP32_S3_BOX_3_BOARD: y
-      CONFIG_SPIRAM: y
-      CONFIG_SPIRAM_MODE_OCT: y
-      CONFIG_SPIRAM_SPEED_80M: y
-# Required to get the latest RGB driver
+      COMPILER_OPTIMIZATION_SIZE: y
+      CONFIG_ESP32_S3_BOX_BOARD: y
+      CONFIG_SPIRAM_BANKSWITCH_ENABLE: y
+      CONFIG_SPIRAM_BANKSWITCH_RESERVE: '8'
     platform_version: 6.8.1
     version: 5.3.1
 
 # Set PSRAM parameters
-#psram:
-#  mode: octal
-#  speed: 80MHz
+psram:
+  speed: 80MHz
 
 dashboard_import:
   package_import_url: github://kyvaith/AtmosferaEchoHub/AtmosferaEchoHub.yaml@main
@@ -74,6 +67,9 @@ logger:
 
 # Enable Captive Portal page
 captive_portal:
+
+debug:
+  update_interval: 1s
 
 spi:
  clk_pin: 7
@@ -140,6 +136,17 @@ sensor:
             - lvgl.widget.update:
                 id: cov_down_myroom
                 text_opa: 100%
+  - platform: debug
+    psram:
+      name: "Free PSRAM"
+      id: free_psram
+      on_value: 
+        then:
+          - lvgl.label.update:
+              id: ip_address_label
+              text:
+                format: "%f"
+                args: [ 'id(free_psram).state' ]
 
 text_sensor:
   - platform: homeassistant
@@ -160,12 +167,28 @@ text_sensor:
                 text:
                   format: "%.0f%%"
                   args: [ 'id(cover_myroom_pos).get_state()' ]
+   
+  - platform: wifi_info
+    ip_address:
+      name: ESP IP Address
+      id: ip_address
+      on_value: 
+        then:
+          - lvgl.label.update:
+              id: ip_address_label
+              text:
+                format: "%s"
+                args: [ 'id(ip_address).get_state().c_str()' ]
 
 lvgl:
   buffer_size: 80%
   pages:
     - id: room_page
       widgets:
+        - label:
+            id: ip_address_label
+            align: TOP_RIGHT
+            text: 'n/a'
         - label:
             x: 10
             y: 6
