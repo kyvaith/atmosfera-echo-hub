@@ -8,3 +8,5 @@ With built-in ZigBee and Matter support, the Atmosfera Echo Hub connects a wide 
 Its intuitive voice assistant responds to your commands, enabling you to adjust settings, monitor conditions, and control devices with ease.
 
 Experience the future of home automation with the Atmosfera Echo Hub, where comfort, connectivity, and control converge.
+
+![](https://esphome.io/_images/made-for-esphome-white-on-black.svg)
