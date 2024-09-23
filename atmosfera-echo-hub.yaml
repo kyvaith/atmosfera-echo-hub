@@ -6,28 +6,33 @@ esphome:
   project:
     name: 'kyvaith.AtmosferaEchoHub'
     version: 'dev'
+  platformio_options:
+    board_build.f_cpu: 240000000L
   area: 'Living Room'
 
 esp32:
-  board: esp32s3box
+  board: esp32-s3-devkitc-1
+
   flash_size: 16MB
   framework:
     type: esp-idf
 # Required to achieve sufficient PSRAM bandwidth
     sdkconfig_options:
+      CONFIG_ESP32_S3_BOX_BOARD: y
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: y
       CONFIG_ESP32S3_DATA_CACHE_64KB: y
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: y
       CONFIG_AUDIO_BOARD_CUSTOM: y
-      COMPILER_OPTIMIZATION_SIZE: y
-      CONFIG_ESP32_S3_BOX_BOARD: y
-      CONFIG_SPIRAM_BANKSWITCH_ENABLE: y
-      CONFIG_SPIRAM_BANKSWITCH_RESERVE: '8'
+      # COMPILER_OPTIMIZATION_SIZE: y
+      # CONFIG_SPIRAM_MODE_OCT: y
+      # CONFIG_SPIRAM_SPEED_120M: y
+      # CONFIG_SPIRAM_CACHE_WORKAROUND: y
     platform_version: 6.8.1
     version: 5.3.1
 
 # Set PSRAM parameters
 psram:
+  mode: octal
   speed: 80MHz
 
 dashboard_import:
@@ -182,6 +187,12 @@ text_sensor:
 
 lvgl:
   buffer_size: 80%
+  on_idle: 
+    timeout: 90s
+    then: 
+      - logger.log: LVGL is idle
+      # - light.turn_off: backlight
+      - lvgl.pause: {}
   pages:
     - id: room_page
       widgets:
