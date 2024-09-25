@@ -9,10 +9,24 @@ esphome:
   platformio_options:
     board_build.f_cpu: 240000000L
   area: 'Living Room'
+  on_boot:
+    priority: 600
+    then:
+    - light.turn_on: lcd_round_backlight
+
+output:
+- id: lcd_round_backlight_output
+  platform: ledc
+  pin: 14
+
+light:
+- platform: monochromatic
+  output: "lcd_round_backlight_output"
+  id: "lcd_round_backlight"
+  name: "Display backlight"
 
 esp32:
   board: esp32-s3-devkitc-1
-
   flash_size: 16MB
   framework:
     type: esp-idf
@@ -24,9 +38,6 @@ esp32:
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: y
       CONFIG_AUDIO_BOARD_CUSTOM: y
       # COMPILER_OPTIMIZATION_SIZE: y
-      # CONFIG_SPIRAM_MODE_OCT: y
-      # CONFIG_SPIRAM_SPEED_120M: y
-      # CONFIG_SPIRAM_CACHE_WORKAROUND: y
     platform_version: 6.8.1
     version: 5.3.1
 
@@ -49,8 +60,7 @@ qr_code:
 wifi:
   ssid: Wokwi-GUEST
   ap:
-    ssid: ${device_name}
-    password: ${device_name}
+    password: password
   on_connect:
     - delay: 5s  # Gives time for improv results to be transmitted
     - ble.disable:
@@ -69,6 +79,7 @@ ota:
 
 # Enable logging
 logger:
+  level: debug
 
 # Enable Captive Portal page
 captive_portal:
@@ -87,29 +98,33 @@ i2c:
  
 display:
   - platform: ili9xxx
-    model: TFT 2.4
+    model: gc9a01a
     cs_pin: 18
     dc_pin: 16
     reset_pin: 17
     rotation: 270
+    pixel_mode: 16bit
     id: touchscreen1
-    invert_colors: false
+    invert_colors: true
     auto_clear_enabled: false
     update_interval: never
     dimensions:
       height: 240
       width: 240
-      offset_height: 55
+      # offset_height: 55
 
 touchscreen:
-  platform: ft63x6
+  # platform: ft63x6
+  platform: cst816
+  interrupt_pin: 11
+  reset_pin: 9
   display: touchscreen1
   calibration:
     x_max: 240
-    y_max: 320
+    y_max: 240
   transform:
-    mirror_x: true
-    mirror_y: true
+    mirror_x: false
+    mirror_y: false
 
 sensor:
   - platform: homeassistant
@@ -185,6 +200,16 @@ text_sensor:
                 format: "%s"
                 args: [ 'id(ip_address).get_state().c_str()' ]
 
+image:
+  - file: https://esphome.io/_static/favicon-512x512.png
+    id: boot_logo
+    resize: 200x200
+    type: RGB565
+    use_transparency: true
+
+
+
+
 lvgl:
   buffer_size: 80%
   on_idle: 
@@ -192,7 +217,38 @@ lvgl:
     then: 
       - logger.log: LVGL is idle
       # - light.turn_off: backlight
-      - lvgl.pause: {}
+      # - lvgl.pause: {}
+  top_layer:
+    widgets:
+      - obj:
+          id: boot_screen
+          x: 0
+          y: 0
+          width: 100%
+          height: 100%
+          bg_color: 0xffffff
+          bg_opa: COVER
+          radius: 0
+          pad_all: 0
+          border_width: 0
+          widgets:
+            - image:
+                align: CENTER
+                src: boot_logo
+                y: -40
+            - spinner:
+                align: CENTER
+                y: 95
+                height: 50
+                width: 50
+                spin_time: 1s
+                arc_length: 60deg
+                arc_width: 8
+                indicator:
+                  arc_color: 0x18bcf2
+                  arc_width: 8
+          on_press:
+            - lvgl.widget.hide: boot_screen
   pages:
     - id: room_page
       widgets:
@@ -201,13 +257,13 @@ lvgl:
             align: TOP_RIGHT
             text: 'n/a'
         - label:
-            x: 10
+            x: 85
             y: 6
             width: 70
             text: "My room"
             text_align: CENTER
         - button:
-            x: 10
+            x: 85
             y: 30
             width: 70
             height: 68
@@ -223,7 +279,7 @@ lvgl:
                     data:
                       entity_id: cover.myroom
         - button:
-            x: 10
+            x: 85
             y: 103
             width: 70
             height: 68
@@ -239,7 +295,7 @@ lvgl:
                     data:
                       entity_id: cover.myroom
         - button:
-            x: 10
+            x: 85
             y: 178
             width: 70
             height: 68
