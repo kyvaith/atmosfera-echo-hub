@@ -1,29 +1,69 @@
-esphome:
+substitutions:
+
+# You can change the Friendly Name and Location to something, that will suite the location of your device, i.e. "Living room speaker". Do not change the 'name'.
   name: 'atmosfera-echo-hub'
-  name_add_mac_suffix: true
   friendly_name: 'Atmosfera Echo Hub'
+  location: 'Living Room'
+  
+  external_media_player: your_media_player  # Change this to your external media player enity_id: do not include media_player.
+  home_assistant_host: http://homeassistant.local:8123 # Change to the full url or IP of your HA server including port
+  tts_voice_speed: "24000" #options #nabu casa "24000" #piper "16000" elevenlabs "44100" must include quotes
+  
+# Change the values on the right to match your locale
+  monday: Monday
+  tuesday: Tuesday
+  wednesday: Wednesday
+  thursday: Thursday
+  friday: Friday
+  saturday: Saturday
+  sunday: Sunday
+  
+  jan: January
+  feb: February
+  mar: March
+  apr: April
+  may: May
+  jun: June
+  jul: July
+  aug: August
+  sept: September
+  oct: October
+  nov: November
+  dec: December
+  
+  voice_assist_idle_phase_id: "1"
+  voice_assist_listening_phase_id: "2"
+  voice_assist_thinking_phase_id: "3"
+  voice_assist_replying_phase_id: "4"
+  voice_assist_not_ready_phase_id: "10"
+  voice_assist_error_phase_id: "11"
+  voice_assist_muted_phase_id: "12"
+
+  # These unique characters have been extracted from every test file of every language available on https://github.com/home-assistant/intents (14 March 2024)
+  allowed_characters: " !#%'()+,-./0123456789:;<>?@ABCDEFGHIJKLMNOPQRSTUVWYZ[]_abcdefghijklmnopqrstuvwxyz{|}°²³µ¿ÁÂÄÅÉÖÚßàáâãäåæçèéêëìíîðñòóôõöøùúûüýþāăąćčďĐđēėęěğĮįıļľŁłńňőřśšťũūůűųźŻżŽžơưșțΆΈΌΐΑΒΓΔΕΖΗΘΚΜΝΠΡΣΤΥΦάέήίαβγδεζηθικλμνξοπρςστυφχψωϊόύώАБВГДЕЖЗИКЛМНОПРСТУХЦЧШЪЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюяёђєіїјљњћאבגדהוזחטיכלםמןנסעפץצקרשת،ءآأإئابةتجحخدذرزسشصضطظعغفقكلمنهوىيٹپچڈکگںھہیےংকচতধনফবযরলশষস়ািু্చయలిెొ్ംഅആഇഈഉഎഓകഗങചജഞടഡണതദധനപഫബഭമയരറലളവശസഹാിീുൂെേൈ്ൺൻർൽൾაბგდევზთილმნოპრსტუფქყშჩცძჭხạảấầẩậắặẹẽếềểệỉịọỏốồổỗộớờởợụủứừửữựỳ—、一上不个中为主乾了些亮人任低佔何作供依侧係個側偵充光入全关冇冷几切到制前動區卧厅厨及口另右吊后吗启吸呀咗哪唔問啟嗎嘅嘛器圍在场執場外多大始安定客室家密寵对將小少左已帘常幫幾库度庫廊廚廳开式後恆感態成我戲戶户房所扇手打执把拔换掉控插摄整斯新明是景暗更最會有未本模機檯櫃欄次正氏水沒没洗活派温測源溫漏潮激濕灯為無煙照熱燈燥物狀玄现現瓦用發的盞目着睡私空窗立笛管節簾籬紅線红罐置聚聲脚腦腳臥色节著行衣解設調請謝警设调走路車车运連遊運過道邊部都量鎖锁門閂閉開關门闭除隱離電震霧面音頂題顏颜風风食餅餵가간감갔강개거게겨결경고공과관그금급기길깥꺼껐꼽나난내네놀누는능니다닫담대더데도동됐되된됨둡드든등디때떤뜨라래러렇렌려로료른를리림링마많명몇모무문물뭐바밝방배변보부불블빨뽑사산상색서설성세센션소쇼수스습시신실싱아안않알았애야어얼업없었에여연열옆오온완외왼요운움워원위으은을음의이인일임입있작잠장재전절정제져조족종주줄중줘지직진짐쪽차창천최추출충치침커컴켜켰쿠크키탁탄태탬터텔통트튼티파팬퍼폰표퓨플핑한함해했행혀현화활후휴힘，？"
+
+esphome:
+  name: ${name}
+  name_add_mac_suffix: true
+  friendly_name: ${friendly_name}
   comment: 'The Atmosfera Echo Hub is the ultimate Home Assistant companion, seamlessly integrating voice control, climate management, and smart device connectivity. Designed to create a harmonious living environment, this multifunctional hub combines advanced presence and climate sensors with a powerful voice-controlled satellite speaker, allowing you to effortlessly manage your home. With built-in ZigBee and Matter support, the Atmosfera Echo Hub connects a wide range of smart devices to Home Assistant, ensuring a cohesive ecosystem. Its intuitive voice assistant responds to your commands, enabling you to adjust settings, monitor conditions, and control devices with ease. Experience the future of home automation with the Atmosfera Echo Hub, where comfort, connectivity, and control converge.'
   project:
-    name: 'kyvaith.AtmosferaEchoHub'
+    name: 'kyvaith.atmosfera-echo-hub'
     version: 'dev'
+  min_version: 2024.9.0
   platformio_options:
     board_build.f_cpu: 240000000L
-  area: 'Living Room'
+    board_build.flash_mode: dio
+#  compile_process_limit: 1
+  area: ${location}
   on_boot:
     priority: 600
     then:
-    - light.turn_on: lcd_round_backlight
-
-output:
-- id: lcd_round_backlight_output
-  platform: ledc
-  pin: 14
-
-light:
-- platform: monochromatic
-  output: "lcd_round_backlight_output"
-  id: "lcd_round_backlight"
-  name: "Display backlight"
+      - light.turn_on:
+          id: display_backlight
+          transition_length: 2s
+      - delay: 3s
+      - lvgl.widget.hide: boot_screen
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -38,44 +78,100 @@ esp32:
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: y
       CONFIG_AUDIO_BOARD_CUSTOM: y
       # COMPILER_OPTIMIZATION_SIZE: y
-    platform_version: 6.8.1
-    version: 5.3.1
+ # Fix missing components for ADF in IDF 5+
+    components:
+      - name: nghttp
+        source: github://kyvaith/nghttp@master
+      - name: mdns
+        source: github://kyvaith/mdns@main
+      - name: esp-nn
+        source: github://espressif/esp-nn@v1.0.0-rc1
+      - name: esp-dsp
+        source: github://espressif/esp-dsp@v1.4.14
+      - name: esp-adf-libs
+        source: github://espressif/esp-adf-libs@f1b8cdbf9986402fbd9a743704eb699a3521900a
+      - name: esp-sr
+        source: github://espressif/esp-sr@394aae67b578cf45ed13dad9c2e0c428f5d599f0
+    platform_version: 6.9.0
+    version: latest
+
+# Import ESP-ADF with improved audio
+external_components:
+  - source:
+      type: git
+      url: https://github.com/kyvaith/esphome_audio
+      ref: main
+    components: [ adf_pipeline, i2s_audio ]
+    refresh: 0s  
 
 # Set PSRAM parameters
 psram:
   mode: octal
   speed: 80MHz
+  
+output:
+- id: display_backlight_output
+  platform: ledc
+  pin: 14
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
 
 dashboard_import:
-  package_import_url: github://kyvaith/AtmosferaEchoHub/AtmosferaEchoHub.yaml@main
+  package_import_url: github://kyvaith/atmosfera-echo-hub/atmosfera-echo-hub.yaml@main
   import_full_config: true
 
 qr_code:
   - id: qr_hotspot
-    value: "WIFI:S:${name};T:WPA;P:${name};;"
+    value: "WIFI:S:${name};T:WPA;P:${name};"
   - id: qr_esphome
     value: https://my.home-assistant.io/redirect/config_flow_start/?domain=esphome 
 
 # Enable Captive Portal AP
 wifi:
-  ssid: Wokwi-GUEST
+  # ssid: Wokwi-GUEST
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
-    password: password
-  on_connect:
-    - delay: 5s  # Gives time for improv results to be transmitted
-    - ble.disable:
-  on_disconnect:
-    - ble.enable:
+#  on_connect:
+#    - script.execute: draw_display
+#    - ble.disable:
+#  on_disconnect:
+#    - script.execute: draw_display
+#    - ble.enable:
 
 esp32_improv:
   authorizer: none
 
+#mdns:
+
 # Enable Home Assistant API
 api:
+#  on_client_connected:
+#    - script.execute: draw_display
+#  on_client_disconnected:
+#    - script.execute: draw_display
 
 # Allow OTA updates
 ota:
   platform: esphome
+
+# Switch to ready-made firmware
+#ota:
+#  - platform: http_request
+#    id: ota_http_request
+#  - on_begin:
+#      - display.page.show: ota_page
+#
+#update:
+#  - platform: http_request
+#    id: update_http_request
+#    name: Firmware
+#    source: https://firmware.esphome.io/bluetooth-proxy/esp32-generic/manifest.json
+#
+#http_request:
+#
 
 # Enable logging
 logger:
@@ -87,14 +183,31 @@ captive_portal:
 debug:
   update_interval: 1s
 
+esp32_ble_tracker:
+  scan_parameters:
+    # We currently use the defaults to ensure Bluetooth
+    # can co-exist with WiFi In the future we may be able to
+    # enable the built-in coexistence logic in ESP-IDF
+    active: true
+
+bluetooth_proxy:
+  active: true
+
 spi:
  clk_pin: 7
  mosi_pin: 15
- miso_pin: 6
+ # A MISO pin should preferably not be specified, as this will limit the maximum rate in some circumstances,
+ # and is not required if the SPI bus is used only for the display.
+ # miso_pin: 6
 
 i2c:
-  sda: 4
-  scl: 5
+  - id: bus_a
+    sda: 4
+    scl: 5
+    scan: false
+    sda_pullup_enabled: true
+    scl_pullup_enabled: true
+    frequency: 100kHz
  
 display:
   - platform: ili9xxx
@@ -116,8 +229,6 @@ display:
 touchscreen:
   # platform: ft63x6
   platform: cst816
-  interrupt_pin: 11
-  reset_pin: 9
   display: touchscreen1
   calibration:
     x_max: 240
@@ -125,6 +236,22 @@ touchscreen:
   transform:
     mirror_x: false
     mirror_y: false
+  on_release:
+      then:
+        - if:
+            condition: lvgl.is_paused
+            then:
+              - light.turn_on:
+                  id: display_backlight
+                  transition_length: 0.6s
+              - lvgl.resume:
+              - lvgl.widget.redraw:
+
+light:
+- platform: monochromatic
+  output: "display_backlight_output"
+  id: "display_backlight"
+  name: "Display backlight"
 
 sensor:
   - platform: homeassistant
@@ -200,24 +327,118 @@ text_sensor:
                 format: "%s"
                 args: [ 'id(ip_address).get_state().c_str()' ]
 
+i2s_audio:
+  - id: i2s_in
+    i2s_lrclk_pin: 8
+    i2s_bclk_pin: 1
+  - id: i2s_out
+    i2s_lrclk_pin: 3
+    i2s_bclk_pin: 9    
+
+adf_pipeline:
+  - platform: i2s_audio
+    type: audio_out
+    id: adf_i2s_out
+    i2s_audio_id: i2s_out
+    i2s_dout_pin: 10
+    adf_alc: false
+#    dac:
+#      i2c_id: bus_a
+#      model: es8311
+#      address: 0x18
+#      enable_pin:
+#        number: GPIO46
+#        ignore_strapping_warning: true
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    fixed_settings: true
+
+  - platform: i2s_audio
+    type: audio_in
+    id: adf_i2s_in
+    i2s_audio_id: i2s_in
+    i2s_din_pin: 2
+    pdm: false
+    channel: left
+#    adc:
+#      i2c_id: bus_a
+#      model: es7210
+#      address: 0x40
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    fixed_settings: true
+
+media_player:
+  - platform: adf_pipeline
+    id: adf_media_player
+    name: s3-box_media_player
+    internal: false
+    keep_pipeline_alive: true
+    announcement_audio:
+      sample_rate: ${tts_voice_speed}
+      bits_per_sample: 16
+      num_channels: 1
+    pipeline:
+      - self
+      - resampler
+      - adf_i2s_out
+#    on_play: 
+#      - lambda: |-
+#          id(media_state) = true;
+#      - component.update: s3_box_lcd
+#    on_idle:
+#      - lambda: |-
+#          id(media_state) = false;
+#      - component.update: s3_box_lcd
+microphone:
+  - platform: adf_pipeline
+    id: box_mic
+    keep_pipeline_alive: true
+    pipeline:
+      - adf_i2s_in
+      - resampler
+      - self
+
+
+micro_wake_word:
+  models:
+    - model: okay_nabu
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 image:
   - file: https://esphome.io/_static/favicon-512x512.png
     id: boot_logo
-    resize: 200x200
+    resize: 100x100
     type: RGB565
     use_transparency: true
 
-
-
-
 lvgl:
   buffer_size: 80%
-  on_idle: 
-    timeout: 90s
-    then: 
-      - logger.log: LVGL is idle
-      # - light.turn_off: backlight
-      # - lvgl.pause: {}
+  on_idle:
+    timeout: 10s
+    then:
+      - logger.log: "LVGL is idle"
+      - lvgl.pause:
+      - light.turn_off:
+          id: display_backlight
+          transition_length: 5s
   top_layer:
     widgets:
       - obj:

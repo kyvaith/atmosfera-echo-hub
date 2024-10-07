@@ -1,0 +1,23 @@
+{
+    "name": "Atmosfera Echo Hub",
+    "version": "0.1",
+    "home_assistant_domain": "esphome",
+    "new_install_prompt_erase": false,
+    "builds": [
+      {
+        "chipFamily": "ESP32-S3",
+        "ota": {
+          "path": "0.1/atmosfera-echo-hub.ota.bin",
+          "md5": "8f31a114e9658c93b509003e8cfef692",
+          "summary": "* Fix LEDs stuck on startup twinkle\r\n* Save/restore wake word enabled state to flash\r\n* Handle case where only one mic channel is configured",
+          "release_url": "https://github.com/kyvaith/homatmosfera-echo-hub/releases/tag/0.1"
+        },
+        "parts": [
+          {
+            "path": "0.1/atmosfera-echo-hub.factory.bin",
+            "offset": 0
+          }
+        ]
+      }
+    ]
+  }
