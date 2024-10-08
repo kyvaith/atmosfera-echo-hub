@@ -10,7 +10,6 @@ Its intuitive voice assistant responds to your commands, enabling you to adjust 
 
 Experience the future of home automation with the Atmosfera Echo Hub, where comfort, connectivity, and control converge.
 
-
 # Setup:
 
 1. Install VSCode
@@ -20,7 +19,7 @@ Experience the future of home automation with the Atmosfera Echo Hub, where comf
    1. Clone this repo
    2. Install dependences:
       ```bash
-      pip install esphome "pillow==10.2.0" python-magic-bin pip-system-certs
+      pip install esphome pillow==10.2.0 python-magic-bin==0.4.14 pip-system-certs
       ```
 
 ![](https://esphome.io/_images/made-for-esphome-white-on-black.svg)
