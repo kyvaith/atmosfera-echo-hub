@@ -38,6 +38,7 @@ substitutions:
   voice_assist_not_ready_phase_id: "10"
   voice_assist_error_phase_id: "11"
   voice_assist_muted_phase_id: "12"
+  micro_wake_word_model: https://github.com/kahrendt/microWakeWord/releases/download/okay_nabu/okay_nabu.json
 
   # These unique characters have been extracted from every test file of every language available on https://github.com/home-assistant/intents (14 March 2024)
   allowed_characters: " !#%'()+,-./0123456789:;<>?@ABCDEFGHIJKLMNOPQRSTUVWYZ[]_abcdefghijklmnopqrstuvwxyz{|}°²³µ¿ÁÂÄÅÉÖÚßàáâãäåæçèéêëìíîðñòóôõöøùúûüýþāăąćčďĐđēėęěğĮįıļľŁłńňőřśšťũūůűųźŻżŽžơưșțΆΈΌΐΑΒΓΔΕΖΗΘΚΜΝΠΡΣΤΥΦάέήίαβγδεζηθικλμνξοπρςστυφχψωϊόύώАБВГДЕЖЗИКЛМНОПРСТУХЦЧШЪЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюяёђєіїјљњћאבגדהוזחטיכלםמןנסעפץצקרשת،ءآأإئابةتجحخدذرزسشصضطظعغفقكلمنهوىيٹپچڈکگںھہیےংকচতধনফবযরলশষস়ািু্చయలిెొ్ംഅആഇഈഉഎഓകഗങചജഞടഡണതദധനപഫബഭമയരറലളവശസഹാിീുൂെേൈ്ൺൻർൽൾაბგდევზთილმნოპრსტუფქყშჩცძჭხạảấầẩậắặẹẽếềểệỉịọỏốồổỗộớờởợụủứừửữựỳ—、一上不个中为主乾了些亮人任低佔何作供依侧係個側偵充光入全关冇冷几切到制前動區卧厅厨及口另右吊后吗启吸呀咗哪唔問啟嗎嘅嘛器圍在场執場外多大始安定客室家密寵对將小少左已帘常幫幾库度庫廊廚廳开式後恆感態成我戲戶户房所扇手打执把拔换掉控插摄整斯新明是景暗更最會有未本模機檯櫃欄次正氏水沒没洗活派温測源溫漏潮激濕灯為無煙照熱燈燥物狀玄现現瓦用發的盞目着睡私空窗立笛管節簾籬紅線红罐置聚聲脚腦腳臥色节著行衣解設調請謝警设调走路車车运連遊運過道邊部都量鎖锁門閂閉開關门闭除隱離電震霧面音頂題顏颜風风食餅餵가간감갔강개거게겨결경고공과관그금급기길깥꺼껐꼽나난내네놀누는능니다닫담대더데도동됐되된됨둡드든등디때떤뜨라래러렇렌려로료른를리림링마많명몇모무문물뭐바밝방배변보부불블빨뽑사산상색서설성세센션소쇼수스습시신실싱아안않알았애야어얼업없었에여연열옆오온완외왼요운움워원위으은을음의이인일임입있작잠장재전절정제져조족종주줄중줘지직진짐쪽차창천최추출충치침커컴켜켰쿠크키탁탄태탬터텔통트튼티파팬퍼폰표퓨플핑한함해했행혀현화활후휴힘，？"
@@ -52,8 +53,7 @@ esphome:
     version: 'dev'
   min_version: 2024.9.0
   platformio_options:
-    board_build.f_cpu: 240000000L
-    board_build.flash_mode: dio
+    board_build.f_cpu: 240000000
 #  compile_process_limit: 1
   area: ${location}
   on_boot:
@@ -66,7 +66,8 @@ esphome:
       - lvgl.widget.hide: boot_screen
 
 esp32:
-  board: esp32-s3-devkitc-1
+  #board: esp32-s3-devkitc-1
+  board: esp32s3box
   flash_size: 16MB
   framework:
     type: esp-idf
@@ -77,25 +78,14 @@ esp32:
       CONFIG_ESP32S3_DATA_CACHE_64KB: y
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: y
       CONFIG_AUDIO_BOARD_CUSTOM: y
-      # COMPILER_OPTIMIZATION_SIZE: y
-# Fix missing components for ADF in IDF 5+
-#    components:
-#      - name: nghttp
-#        source: github://kyvaith/nghttp@master
-#      - name: mdns
-#        source: github://kyvaith/mdns@main
-#      - name: esp-nn
-#        source: github://espressif/esp-nn@v1.0.0-rc1
-#      - name: esp-dsp
-#        source: github://espressif/esp-dsp@v1.4.14
-#      - name: esp-adf-libs
-#        source: github://espressif/esp-adf-libs@f1b8cdbf9986402fbd9a743704eb699a3521900a
-#      - name: esp-sr
-#        source: github://espressif/esp-sr@394aae67b578cf45ed13dad9c2e0c428f5d599f0
-#      - name: openthread
-#        source: github://espressif/openthread
-#    platform_version: 6.9.0
-#    version: 5.3.1
+      CONFIG_ESPTOOLPY_FLASHSIZE_16MB: y
+      CONFIG_ESPTOOLPY_FLASHMODE_QIO: y
+      CONFIG_ESPTOOLPY_FLASHFREQ_80M: y
+      CONFIG_COMPILER_OPTIMIZATION_PERF: y
+      CONFIG_ESP32_REV_MIN_3: y
+      #CONFIG_COMPILER_OPTIMIZATION_ASSERTIONS_DISABLE: y
+    platform_version: 6.8.1
+    version: 5.3.1
 
 # Import ESP-ADF with improved audio
 external_components:
@@ -145,8 +135,6 @@ wifi:
 
 esp32_improv:
   authorizer: none
-
-mdns:
 
 # Enable Home Assistant API
 api:
@@ -198,6 +186,7 @@ bluetooth_proxy:
 spi:
  clk_pin: 7
  mosi_pin: 15
+ # miso_pin: X
  # A MISO pin should preferably not be specified, as this will limit the maximum rate in some circumstances,
  # and is not required if the SPI bus is used only for the display.
  # miso_pin: 6
@@ -206,21 +195,18 @@ i2c:
   - id: bus_a
     sda: 4
     scl: 5
-    scan: false
-    sda_pullup_enabled: true
-    scl_pullup_enabled: true
-    frequency: 100kHz
  
 display:
   - platform: ili9xxx
-    model: gc9a01a
+    #model: gc9a01a
+    model: TFT 2.4
     cs_pin: 18
     dc_pin: 16
     reset_pin: 17
     rotation: 270
     pixel_mode: 16bit
     id: touchscreen1
-    invert_colors: true
+    invert_colors: false
     auto_clear_enabled: false
     update_interval: never
     dimensions:
@@ -229,15 +215,18 @@ display:
       # offset_height: 55
 
 touchscreen:
-  # platform: ft63x6
-  platform: cst816
+  platform: ft63x6
+  #platform: cst816
   display: touchscreen1
   calibration:
     x_max: 240
-    y_max: 240
+    y_max: 320
+    #y_max: 240
   transform:
-    mirror_x: false
-    mirror_y: false
+    #mirror_x: false
+    #mirror_y: false
+    mirror_x: true
+    mirror_y: true
   on_release:
       then:
         - if:
@@ -328,91 +317,6 @@ text_sensor:
               text:
                 format: "%s"
                 args: [ 'id(ip_address).get_state().c_str()' ]
-
-i2s_audio:
-  - id: i2s_in
-    i2s_lrclk_pin: 8
-    i2s_bclk_pin: 1
-  - id: i2s_out
-    i2s_lrclk_pin: 3
-    i2s_bclk_pin: 9    
-
-adf_pipeline:
-  - platform: i2s_audio
-    type: audio_out
-    id: adf_i2s_out
-    i2s_audio_id: i2s_out
-    i2s_dout_pin: 10
-    adf_alc: false
-#    dac:
-#      i2c_id: bus_a
-#      model: es8311
-#      address: 0x18
-#      enable_pin:
-#        number: GPIO46
-#        ignore_strapping_warning: true
-    sample_rate: 16000
-    bits_per_sample: 16bit
-    fixed_settings: true
-
-  - platform: i2s_audio
-    type: audio_in
-    id: adf_i2s_in
-    i2s_audio_id: i2s_in
-    i2s_din_pin: 2
-    pdm: false
-    channel: left
-#    adc:
-#      i2c_id: bus_a
-#      model: es7210
-#      address: 0x40
-    sample_rate: 16000
-    bits_per_sample: 16bit
-    fixed_settings: true
-
-media_player:
-  - platform: adf_pipeline
-    id: adf_media_player
-    name: s3-box_media_player
-    internal: false
-    keep_pipeline_alive: true
-    announcement_audio:
-      sample_rate: ${tts_voice_speed}
-      bits_per_sample: 16
-      num_channels: 1
-    pipeline:
-      - self
-      - resampler
-      - adf_i2s_out
-#    on_play: 
-#      - lambda: |-
-#          id(media_state) = true;
-#      - component.update: s3_box_lcd
-#    on_idle:
-#      - lambda: |-
-#          id(media_state) = false;
-#      - component.update: s3_box_lcd
-microphone:
-  - platform: adf_pipeline
-    id: box_mic
-    keep_pipeline_alive: true
-    pipeline:
-      - adf_i2s_in
-      - resampler
-      - self
-
-
-micro_wake_word:
-  models:
-    - model: okay_nabu
-
-
-
-
-
-
-
-
 
 
 
