@@ -21,5 +21,7 @@ Experience the future of home automation with the Atmosfera Echo Hub, where comf
       ```bash
       pip install esphome pillow==10.2.0 libmagic python-magic-bin==0.4.14 pip-system-certs
       ```
+5. Compile with `esphome -v compile .\atmosfera-echo-hub.yaml`
+6. Press Ctrl+Shift+P and select `Wokwi: Start Simulator`
 
 ![](https://esphome.io/_images/made-for-esphome-white-on-black.svg)
