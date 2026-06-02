@@ -1,0 +1,26 @@
+# Album artwork download and decoding.
+# artwork_image keeps artwork handling off the main YAML and applies the LVGL byte order consistently.
+image:
+  - file: "https://raw.githubusercontent.com/jtenniswood/esphome-media-player/main/common/assets/placeholder.png"
+    id: album_art_placeholder
+    type: RGB565
+    byte_order: ${image_byte_order}
+
+http_request:
+  id: http_req
+  verify_ssl: ${ha_verify_ssl}
+
+artwork_image:
+  - url: "https://placehold.co/${artwork_size}x${artwork_size}/2d2d2d/555555.jpg"
+    id: album_art_background
+    format: AUTO
+    type: RGB565
+    byte_order: ${image_byte_order}
+    placeholder: album_art_placeholder
+    resize: ${artwork_size}x${artwork_size}
+    buffer_size: ${artwork_image_buffer_size}
+    allow_insecure_local_urls: ${allow_insecure_local_artwork}
+    on_download_finished:
+      - script.execute: media_apply_artwork
+    on_error:
+      - script.execute: media_handle_artwork_error

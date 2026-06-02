@@ -1,0 +1,15 @@
+# Factory build for first-time flashing and ESP Web Tools.
+# ESP32-P4 does not currently build improv_serial cleanly in this stack, so factory onboarding uses fallback AP.
+
+packages:
+  atmosfera_echo_hub: !include atmosfera-echo-hub.yaml
+
+esphome:
+  name_add_mac_suffix: true
+
+wifi:
+  ap:
+    ssid: "Atmosfera Echo Hub Setup"
+    password: "atmosfera"
+
+captive_portal:

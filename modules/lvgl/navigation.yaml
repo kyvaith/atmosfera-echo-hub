@@ -1,0 +1,252 @@
+# Navigation state and screen-level actions.
+# Tile pages, music view and settings view share this small state machine.
+globals:
+  - id: ui_page
+    type: int
+    restore_value: no
+    initial_value: '1'
+  - id: touch_tracking
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: touch_dragging
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: touch_swipe_committed
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: touch_snapshot_active
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: touch_drag_page
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: touch_drag_dir
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: touch_last_render_ms
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: touch_last_page_swipe_ms
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: touch_start_x
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: touch_start_y
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: touch_last_x
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: touch_last_y
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+script:
+  - id: ui_show_tiles_1
+    then:
+      - lambda: |-
+          lv_obj_clear_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_x(id(controls_root_1), 0);
+          lv_obj_set_x(id(controls_root_2), 800);
+          lv_obj_set_x(id(controls_root_3), 1600);
+          lv_obj_set_x(id(controls_root_4), 2400);
+          lv_obj_set_y(id(wear_root), 0);
+      - globals.set:
+          id: ui_page
+          value: '1'
+  - id: ui_show_tiles_1_from_player
+    then:
+      - script.execute: ui_show_tiles_1
+      - lvgl.page.show:
+          id: controls_page
+          animation: MOVE_RIGHT
+          time: 250ms
+  - id: ui_show_tiles_2
+    then:
+      - lambda: |-
+          lv_obj_add_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_clear_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_x(id(controls_root_1), -800);
+          lv_obj_set_x(id(controls_root_2), 0);
+          lv_obj_set_x(id(controls_root_3), 800);
+          lv_obj_set_x(id(controls_root_4), 1600);
+          lv_obj_set_y(id(wear_root), 0);
+      - globals.set:
+          id: ui_page
+          value: '2'
+  - id: ui_show_tiles_3
+    then:
+      - lambda: |-
+          lv_obj_add_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_clear_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_x(id(controls_root_1), -1600);
+          lv_obj_set_x(id(controls_root_2), -800);
+          lv_obj_set_x(id(controls_root_3), 0);
+          lv_obj_set_x(id(controls_root_4), 800);
+          lv_obj_set_y(id(wear_root), 0);
+      - globals.set:
+          id: ui_page
+          value: '3'
+  - id: ui_show_tiles_4
+    then:
+      - lambda: |-
+          lv_obj_add_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_clear_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_x(id(controls_root_1), -2400);
+          lv_obj_set_x(id(controls_root_2), -1600);
+          lv_obj_set_x(id(controls_root_3), -800);
+          lv_obj_set_x(id(controls_root_4), 0);
+          lv_obj_set_y(id(wear_root), 0);
+      - globals.set:
+          id: ui_page
+          value: '4'
+  - id: ui_show_player
+    then:
+      - lambda: |-
+          lv_obj_clear_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_clear_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
+          if (lv_obj_has_flag(id(album_art_background_widget), LV_OBJ_FLAG_HIDDEN)) {
+            lv_obj_clear_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
+          } else {
+            lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
+          }
+          lv_obj_set_x(id(controls_root_1), 0);
+          lv_obj_set_x(id(controls_root_2), 800);
+          lv_obj_set_x(id(controls_root_3), 1600);
+          lv_obj_set_x(id(controls_root_4), 2400);
+          lv_obj_set_y(id(wear_root), 0);
+      - globals.set:
+          id: ui_page
+          value: '0'
+      - lvgl.page.show:
+          id: music_page
+          animation: MOVE_BOTTOM
+          time: 250ms
+  - id: ui_show_settings
+    then:
+      - lambda: |-
+          lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_y(id(settings_root), 0);
+      - globals.set:
+          id: ui_page
+          value: '5'
+      - script.execute: ui_apply_settings_state
+      - lvgl.page.show:
+          id: settings_page
+          animation: MOVE_BOTTOM
+          time: 220ms
+  - id: ui_show_tiles_1_from_settings
+    then:
+      - script.execute: ui_show_tiles_1
+      - lvgl.page.show:
+          id: controls_page
+          animation: MOVE_TOP
+          time: 180ms
+  - id: ui_apply_settings_state
+    then:
+      - lambda: |-
+          lvgl_esphome_set_perf_logging_enabled(id(settings_perf_logs_switch).state);
+          lvgl_esphome_set_swipe_logging_enabled(id(settings_swipe_logs_switch).state);
+
+          if (id(perf_overlay_label) != nullptr) {
+            if (id(settings_perf_overlay_switch).state) {
+              lv_obj_clear_flag(id(perf_overlay_label), LV_OBJ_FLAG_HIDDEN);
+            } else {
+              lv_obj_add_flag(id(perf_overlay_label), LV_OBJ_FLAG_HIDDEN);
+            }
+          }
+
+          auto set_toggle = [](lv_obj_t *button, lv_obj_t *value, bool on) {
+            if (button != nullptr) {
+              lv_obj_set_style_bg_color(button, lv_color_hex(on ? 0x173B34 : 0x1B1F2A), 0);
+              lv_obj_set_style_border_color(button, lv_color_hex(on ? 0x8CEED1 : 0x343B4C), 0);
+            }
+            if (value != nullptr) {
+              lv_label_set_text(value, on ? "ON" : "OFF");
+              lv_obj_set_style_text_color(value, lv_color_hex(on ? 0xA8F4DF : 0xAEB4C2), 0);
+            }
+          };
+
+          auto set_screen_tone = [](lv_obj_t *overlay, bool on) {
+            if (overlay == nullptr) return;
+            if (on) {
+              lv_obj_clear_flag(overlay, LV_OBJ_FLAG_HIDDEN);
+            } else {
+              lv_obj_add_flag(overlay, LV_OBJ_FLAG_HIDDEN);
+            }
+          };
+
+          set_toggle(id(settings_true_colour_button), id(settings_true_colour_value), id(settings_true_colour_switch).state);
+          set_toggle(id(settings_screen_tone_button), id(settings_screen_tone_value), id(settings_screen_tone_switch).state);
+          set_toggle(id(settings_perf_overlay_button), id(settings_perf_overlay_value), id(settings_perf_overlay_switch).state);
+          set_toggle(id(settings_system_logs_button), id(settings_system_logs_value), id(settings_system_logs_switch).state);
+          set_toggle(id(settings_perf_logs_button), id(settings_perf_logs_value), id(settings_perf_logs_switch).state);
+          set_toggle(id(settings_swipe_logs_button), id(settings_swipe_logs_value), id(settings_swipe_logs_switch).state);
+          set_toggle(id(settings_beta_firmware_button), id(settings_beta_firmware_value), id(settings_beta_firmware_switch).state);
+
+          if (id(settings_display_brightness_button) != nullptr) {
+            lv_obj_set_style_bg_color(id(settings_display_brightness_button), lv_color_hex(0x2B303B), 0);
+            lv_obj_set_style_border_color(id(settings_display_brightness_button), lv_color_hex(0x735E9A), 0);
+          }
+          if (id(settings_display_brightness_value) != nullptr) {
+            char brightness_buf[12];
+            snprintf(brightness_buf, sizeof(brightness_buf), "%d%%", (int)(id(settings_display_brightness).state + 0.5f));
+            lv_label_set_text(id(settings_display_brightness_value), brightness_buf);
+          }
+
+          if (id(settings_display_timeout_button) != nullptr) {
+            lv_obj_set_style_bg_color(id(settings_display_timeout_button), lv_color_hex(0x2B303B), 0);
+            lv_obj_set_style_border_color(id(settings_display_timeout_button), lv_color_hex(0x735E9A), 0);
+          }
+          if (id(settings_display_timeout_value) != nullptr) {
+            char timeout_buf[16];
+            int timeout_s = (int)(id(settings_display_timeout).state + 0.5f);
+            if (timeout_s <= 0) {
+              snprintf(timeout_buf, sizeof(timeout_buf), "Never");
+            } else {
+              snprintf(timeout_buf, sizeof(timeout_buf), "%ds", timeout_s);
+            }
+            lv_label_set_text(id(settings_display_timeout_value), timeout_buf);
+          }
+
+          set_screen_tone(id(screen_tone_overlay_controls), id(settings_screen_tone_switch).state);
+          set_screen_tone(id(screen_tone_overlay_settings), id(settings_screen_tone_switch).state);
+          set_screen_tone(id(screen_tone_overlay_music), id(settings_screen_tone_switch).state);
+
+          if (id(settings_true_colour_note) != nullptr) {
+            lv_label_set_text(id(settings_true_colour_note),
+                              id(settings_true_colour_switch).state ? "RGB888 Active" : "RGB565 needs 16-bit build");
+          }

@@ -1,0 +1,999 @@
+# Main tile pages.
+# These four WearOS-inspired pages are the home surface for Home Assistant controls.
+lvgl:
+  pages:
+    - id: controls_page
+      bg_color: 0x05070C
+      widgets:
+        - obj:
+            id: controls_root_1
+            width: 800
+            height: 800
+            align: CENTER
+            x: 0
+            bg_color: 0x05070C
+            border_width: 0
+            radius: 400
+            pad_all: 0
+            scrollable: false
+            widgets:
+              - obj:
+                  width: 760
+                  height: 760
+                  align: CENTER
+                  bg_color: 0x10131B
+                  border_width: 1
+                  border_color: 0x2A3344
+                  radius: 380
+                  pad_all: 0
+                  scrollable: false
+                  gesture_bubble: true
+              - label:
+                  text: "Room"
+                  align: TOP_MID
+                  y: 54
+                  width: 520
+                  text_align: CENTER
+                  text_color: 0xF4EFFA
+                  text_font: roboto_24
+              - label:
+                  text: "1 of 4"
+                  align: TOP_MID
+                  y: 88
+                  width: 140
+                  text_align: CENTER
+                  bg_color: 0x1B1F2A
+                  bg_opa: 80%
+                  radius: 16
+                  pad_top: 4
+                  pad_bottom: 4
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+              - button:
+                  id: tile_light_button
+                  x: 86
+                  y: 140
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x382D55
+                  border_width: 1
+                  border_color: 0x6D5D9A
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Light"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Toggle"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xEADDFF
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: light.toggle
+                          variables:
+                            target: !lambda 'return id(tile_light_entity_text).state;'
+                          data_template:
+                            entity_id: "{{ target }}"
+              - button:
+                  id: tile_switch_button
+                  x: 414
+                  y: 140
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x173A3A
+                  border_width: 1
+                  border_color: 0x4F7C7C
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Switch"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Toggle"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xB7F4EE
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: switch.toggle
+                          variables:
+                            target: !lambda 'return id(tile_switch_entity_text).state;'
+                          data_template:
+                            entity_id: "{{ target }}"
+              - button:
+                  id: tile_scene_button
+                  x: 86
+                  y: 315
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x3F2D1D
+                  border_width: 1
+                  border_color: 0x806044
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Scene"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Run"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xFFDDB8
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: scene.turn_on
+                          variables:
+                            target: !lambda 'return id(tile_scene_entity_text).state;'
+                          data_template:
+                            entity_id: "{{ target }}"
+              - button:
+                  id: tile_trigger_button
+                  x: 414
+                  y: 315
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x202D4C
+                  border_width: 1
+                  border_color: 0x536B9D
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Doorbell"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Press"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xD6E2FF
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: button.press
+                          variables:
+                            target: !lambda 'return id(tile_trigger_entity_text).state;'
+                          data_template:
+                            entity_id: "{{ target }}"
+              - obj:
+                  id: tile_slider_card
+                  x: 86
+                  y: 490
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x2D3038
+                  border_width: 1
+                  border_color: 0x5A6070
+                  pad_all: 0
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Brightness"
+                        align: TOP_MID
+                        y: 24
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - slider:
+                        id: light_brightness_slider
+                        align: BOTTOM_MID
+                        y: -34
+                        width: 220
+                        height: 18
+                        min_value: 1
+                        max_value: 100
+                        value: 65
+              - button:
+                  id: tile_climate_button
+                  x: 414
+                  y: 490
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x3B2438
+                  border_width: 1
+                  border_color: 0x735575
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Climate"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "22 C"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xFFD7F5
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: climate.set_temperature
+                          variables:
+                            target: !lambda 'return id(tile_climate_entity_text).state;'
+                          data_template:
+                            entity_id: "{{ target }}"
+                          data:
+                            temperature: "22"
+              - label:
+                  text: ""
+                  align: BOTTOM_MID
+                  y: -56
+                  width: 520
+                  text_align: CENTER
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+              - label:
+                  id: perf_label_1
+                  text: ""
+                  align: BOTTOM_MID
+                  y: -24
+                  width: 360
+                  text_align: CENTER
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+
+        - obj:
+            id: controls_root_2
+            width: 800
+            height: 800
+            align: CENTER
+            x: 800
+            bg_color: 0x05070C
+            border_width: 0
+            radius: 400
+            pad_all: 0
+            scrollable: false
+            widgets:
+              - obj:
+                  width: 760
+                  height: 760
+                  align: CENTER
+                  bg_color: 0x10131B
+                  border_width: 1
+                  border_color: 0x2A3344
+                  radius: 380
+                  pad_all: 0
+                  scrollable: false
+                  gesture_bubble: true
+              - label:
+                  text: "Security"
+                  align: TOP_MID
+                  y: 54
+                  width: 520
+                  text_align: CENTER
+                  text_color: 0xF4EFFA
+                  text_font: roboto_24
+              - label:
+                  text: "2 of 4"
+                  align: TOP_MID
+                  y: 88
+                  width: 140
+                  text_align: CENTER
+                  bg_color: 0x1B1F2A
+                  bg_opa: 80%
+                  radius: 16
+                  pad_top: 4
+                  pad_bottom: 4
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+              - button:
+                  id: tile_cover_button
+                  x: 86
+                  y: 140
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x18344D
+                  border_width: 1
+                  border_color: 0x52789D
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Cover"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Toggle"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xCFE8FF
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: cover.toggle
+                          variables:
+                            target: !lambda 'return id(tile_cover_entity_text).state;'
+                          data_template:
+                            entity_id: "{{ target }}"
+              - button:
+                  id: tile_garage_button
+                  x: 414
+                  y: 140
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x422F1E
+                  border_width: 1
+                  border_color: 0x7D6242
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Garage"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Door"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xFFE0B8
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: cover.toggle
+                          variables:
+                            target: !lambda 'return id(tile_garage_entity_text).state;'
+                          data_template:
+                            entity_id: "{{ target }}"
+              - button:
+                  id: tile_lock_button
+                  x: 86
+                  y: 315
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x3F222C
+                  border_width: 1
+                  border_color: 0x815669
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Lock"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Secure"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xFFD7E4
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: lock.lock
+                          variables:
+                            target: !lambda 'return id(tile_lock_entity_text).state;'
+                          data_template:
+                            entity_id: "{{ target }}"
+              - button:
+                  id: tile_alarm_button
+                  x: 414
+                  y: 315
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x34264A
+                  border_width: 1
+                  border_color: 0x70549A
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Alarm"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Arm Away"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xE9DDFF
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: alarm_control_panel.alarm_arm_away
+                          variables:
+                            target: !lambda 'return id(tile_alarm_entity_text).state;'
+                          data_template:
+                            entity_id: "{{ target }}"
+              - button:
+                  id: tile_door_window_button
+                  x: 86
+                  y: 490
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x213238
+                  border_width: 1
+                  border_color: 0x567278
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Door"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Window"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xCBF3F7
+                        text_font: roboto_18
+              - button:
+                  id: tile_presence_button
+                  x: 414
+                  y: 490
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x1D3824
+                  border_width: 1
+                  border_color: 0x537A5B
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Presence"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Room"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xC9F6D4
+                        text_font: roboto_18
+              - label:
+                  text: ""
+                  align: BOTTOM_MID
+                  y: -56
+                  width: 520
+                  text_align: CENTER
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+              - label:
+                  id: perf_label_2
+                  text: ""
+                  align: BOTTOM_MID
+                  y: -24
+                  width: 360
+                  text_align: CENTER
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+
+        - obj:
+            id: controls_root_3
+            width: 800
+            height: 800
+            align: CENTER
+            x: 1600
+            bg_color: 0x05070C
+            border_width: 0
+            radius: 400
+            pad_all: 0
+            scrollable: false
+            widgets:
+              - obj:
+                  width: 760
+                  height: 760
+                  align: CENTER
+                  bg_color: 0x10131B
+                  border_width: 1
+                  border_color: 0x2A3344
+                  radius: 380
+                  pad_all: 0
+                  scrollable: false
+                  gesture_bubble: true
+              - label:
+                  text: "Sensors"
+                  align: TOP_MID
+                  y: 54
+                  width: 520
+                  text_align: CENTER
+                  text_color: 0xF4EFFA
+                  text_font: roboto_24
+              - label:
+                  text: "3 of 4"
+                  align: TOP_MID
+                  y: 88
+                  width: 140
+                  text_align: CENTER
+                  bg_color: 0x1B1F2A
+                  bg_opa: 80%
+                  radius: 16
+                  pad_top: 4
+                  pad_bottom: 4
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+              - button:
+                  id: tile_sensor_button
+                  x: 86
+                  y: 140
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x163B43
+                  border_width: 1
+                  border_color: 0x4D7D8B
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Local"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Sensors"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xBCEEFF
+                        text_font: roboto_18
+              - button:
+                  id: tile_weather_button
+                  x: 414
+                  y: 140
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x1E2D4D
+                  border_width: 1
+                  border_color: 0x5970A0
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Weather"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Today"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xD6E2FF
+                        text_font: roboto_18
+              - button:
+                  id: tile_clock_button
+                  x: 86
+                  y: 315
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x35294F
+                  border_width: 1
+                  border_color: 0x705E9C
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Clock"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Date"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xE7DEFF
+                        text_font: roboto_18
+              - button:
+                  id: tile_world_clock_button
+                  x: 414
+                  y: 315
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x38361F
+                  border_width: 1
+                  border_color: 0x77724A
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "World"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Clock"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xF8F0B8
+                        text_font: roboto_18
+              - button:
+                  id: tile_media_button
+                  x: 86
+                  y: 490
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x3B2440
+                  border_width: 1
+                  border_color: 0x785580
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Player"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Open"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xF8D7FF
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - script.execute: ui_show_player
+              - button:
+                  id: tile_subpage_button
+                  x: 414
+                  y: 490
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x2B303B
+                  border_width: 1
+                  border_color: 0x5D687A
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "More"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "System"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xDCE3F2
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - script.execute: ui_show_tiles_4
+              - label:
+                  text: ""
+                  align: BOTTOM_MID
+                  y: -56
+                  width: 560
+                  text_align: CENTER
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+              - label:
+                  id: perf_label_3
+                  text: ""
+                  align: BOTTOM_MID
+                  y: -24
+                  width: 360
+                  text_align: CENTER
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+
+        - obj:
+            id: controls_root_4
+            width: 800
+            height: 800
+            align: CENTER
+            x: 2400
+            bg_color: 0x05070C
+            border_width: 0
+            radius: 400
+            pad_all: 0
+            scrollable: false
+            widgets:
+              - obj:
+                  width: 760
+                  height: 760
+                  align: CENTER
+                  bg_color: 0x10131B
+                  border_width: 1
+                  border_color: 0x2A3344
+                  radius: 380
+                  pad_all: 0
+                  scrollable: false
+                  gesture_bubble: true
+              - label:
+                  text: "System"
+                  align: TOP_MID
+                  y: 54
+                  width: 520
+                  text_align: CENTER
+                  text_color: 0xF4EFFA
+                  text_font: roboto_24
+              - label:
+                  text: "4 of 4"
+                  align: TOP_MID
+                  y: 88
+                  width: 140
+                  text_align: CENTER
+                  bg_color: 0x1B1F2A
+                  bg_opa: 80%
+                  radius: 16
+                  pad_top: 4
+                  pad_bottom: 4
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+              - button:
+                  id: tile_fan_button
+                  x: 86
+                  y: 140
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x193A3D
+                  border_width: 1
+                  border_color: 0x537E83
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Fan"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Toggle"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xC5F2F5
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: fan.toggle
+                          variables:
+                            target: !lambda 'return id(tile_fan_entity_text).state;'
+                          data_template:
+                            entity_id: "{{ target }}"
+              - button:
+                  id: tile_fan_speed_button
+                  x: 414
+                  y: 140
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x1C3A25
+                  border_width: 1
+                  border_color: 0x547D61
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Fan Speed"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "50%"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xCEF6D8
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: fan.set_percentage
+                          variables:
+                            target: !lambda 'return id(tile_fan_entity_text).state;'
+                          data_template:
+                            entity_id: "{{ target }}"
+                          data:
+                            percentage: "50"
+              - button:
+                  id: tile_webhook_button
+                  x: 86
+                  y: 315
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x432642
+                  border_width: 1
+                  border_color: 0x855A81
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Webhook"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Script"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xFFD7F6
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - homeassistant.action:
+                          action: script.turn_on
+                          data:
+                            entity_id: script.atmosfera_webhook
+              - button:
+                  id: tile_internal_button
+                  x: 414
+                  y: 315
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x30333A
+                  border_width: 1
+                  border_color: 0x626873
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Audio"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Amp"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xE4E8F0
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - switch.toggle: pa_enable
+              - button:
+                  id: tile_settings_button
+                  x: 86
+                  y: 490
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x173B43
+                  border_width: 1
+                  border_color: 0x55828B
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Settings"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Device"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xC7F5FF
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - script.execute: ui_show_settings
+              - button:
+                  id: tile_music_page_button
+                  x: 414
+                  y: 490
+                  width: 300
+                  height: 150
+                  radius: 68
+                  bg_color: 0x3A2A54
+                  border_width: 1
+                  border_color: 0x735E9A
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Player"
+                        align: TOP_MID
+                        y: 32
+                        text_color: 0xFFFFFF
+                        text_font: roboto_24
+                    - label:
+                        text: "Music"
+                        align: BOTTOM_MID
+                        y: -32
+                        text_color: 0xEADDFF
+                        text_font: roboto_18
+                  on_click:
+                    then:
+                      - script.execute: ui_show_player
+              - label:
+                  text: ""
+                  align: BOTTOM_MID
+                  y: -56
+                  width: 520
+                  text_align: CENTER
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+              - label:
+                  id: perf_label_4
+                  text: ""
+                  align: BOTTOM_MID
+                  y: -24
+                  width: 360
+                  text_align: CENTER
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+        - label:
+            id: perf_overlay_label
+            text: "FPS --  CPU --%"
+            align: BOTTOM_MID
+            y: -24
+            width: 520
+            text_align: CENTER
+            text_color: 0xF4EFFA
+            bg_color: 0x10131B
+            bg_opa: 65%
+            radius: 20
+            pad_left: 10
+            pad_right: 10
+            text_font: roboto_16
+        - obj:
+            id: screen_tone_overlay_controls
+            x: 0
+            y: 0
+            width: 800
+            height: 800
+            bg_color: 0xFFD7A8
+            bg_opa: 14%
+            border_width: 0
+            radius: 400
+            pad_all: 0
+            scrollable: false
+            clickable: false
+            hidden: true

@@ -1,0 +1,38 @@
+# Display, backlight and I2C bus hardware.
+# The LVGL renderer lives in modules/lvgl; this file only describes the electrical display stack.
+output:
+  - platform: ledc
+    id: backlight_output
+    pin: GPIO26
+    frequency: ${backlight_pwm_frequency}
+    inverted: true
+    min_power: 0.0
+    max_power: 0.8
+
+light:
+  - platform: monochromatic
+    id: display_backlight
+    name: "Display Backlight"
+    output: backlight_output
+    restore_mode: ALWAYS_OFF
+    default_transition_length: 250ms
+
+i2c:
+  id: touchscreen_bus
+  sda: GPIO7
+  scl: GPIO8
+  scan: true
+  frequency: 400kHz
+
+display:
+  - platform: mipi_dsi
+    id: my_display
+    model: WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-3.4C
+    color_depth: 24
+    pixel_mode: 24
+    pclk_frequency: ${display_pclk_frequency}
+    reset_pin:
+      number: GPIO27
+      inverted: false
+    update_interval: never
+    auto_clear_enabled: false

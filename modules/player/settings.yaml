@@ -1,0 +1,83 @@
+# Media player settings exposed through Home Assistant.
+# The selected player and display behavior are runtime-configurable rather than hardcoded in the firmware.
+text:
+  - platform: template
+    name: "Media Player"
+    id: media_player_entity
+    entity_category: config
+    icon: "mdi:cast-audio"
+    mode: text
+    optimistic: true
+    restore_value: true
+    initial_value: "${tile_media_entity}"
+    min_length: 0
+    max_length: 100
+    on_value:
+      - script.execute: subscribe_media_player
+      - delay: 500ms
+      - if:
+          condition:
+            lambda: |-
+              std::string entity = id(media_player_entity).state;
+              return !entity.empty()
+                  && entity.rfind("media_player.", 0) == 0
+                  && esphome::api::global_api_server != nullptr
+                  && esphome::api::global_api_server->is_connected();
+          then:
+            - logger.log:
+                level: INFO
+                tag: media_select
+                format: "Rebooting to apply media player subscription"
+            - lambda: 'global_preferences->sync();'
+            - delay: 200ms
+            - lambda: 'App.safe_reboot();'
+
+number:
+  - platform: template
+    name: "Playback: Track Info Duration"
+    id: track_info_duration
+    min_value: 0
+    max_value: 60
+    step: 1
+    initial_value: ${track_info_duration_default}
+    optimistic: true
+    restore_value: true
+    unit_of_measurement: "s"
+    icon: "mdi:timer-outline"
+    entity_category: config
+    mode: box
+
+switch:
+  - platform: template
+    name: "Playback: Show Remaining Time"
+    id: show_remaining_time
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    icon: "mdi:timer-sand"
+    entity_category: config
+    on_turn_on:
+      - script.execute: refresh_progress_bar_from_state
+    on_turn_off:
+      - script.execute: refresh_progress_bar_from_state
+  - platform: template
+    name: "Playback: Show Progress Bar"
+    id: show_progress_bar
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    icon: "mdi:progress-clock"
+    entity_category: config
+    on_turn_on:
+      - script.execute: refresh_progress_bar_from_state
+    on_turn_off:
+      - script.execute: refresh_progress_bar_from_state
+  - platform: template
+    name: "Playback: Auto-Show Track Info"
+    id: auto_show_track_info
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    icon: "mdi:text-box-outline"
+    entity_category: config
+    on_turn_on:
+      - script.execute: show_track_info
+    on_turn_off:
+      - script.execute: hide_track_info

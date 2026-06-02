@@ -1,0 +1,19 @@
+# External components used by Atmosfera Echo Hub.
+# mipi_dsi and LVGL come from project forks; artwork_image comes from the media player project.
+external_components:
+  - source:
+      type: git
+      url: https://github.com/kyvaith/esphome
+      ref: dev
+      path: esphome/components
+    components: [mipi_dsi]
+    refresh: always
+  - source:
+      type: git
+      url: https://github.com/kyvaith/lvgl_9.5
+      ref: main
+    components: [lvgl, image, font]
+    refresh: always
+  - source: github://jtenniswood/esphome-media-player@main
+    components: [artwork_image]
+    refresh: 1d

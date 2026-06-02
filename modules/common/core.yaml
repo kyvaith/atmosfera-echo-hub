@@ -1,0 +1,84 @@
+# Core ESPHome runtime and network integration.
+# This file intentionally holds boot behavior, API, logging, Wi-Fi and the lightweight web server.
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  project:
+    name: "${project_namespace}.${friendly_name}"
+    version: ${firmware_version}
+  platformio_options:
+    board_build.flash_mode: qio
+  on_boot:
+    priority: 600
+    then:
+      - switch.turn_on: pa_enable
+      - light.turn_off:
+          id: display_backlight
+      - lvgl.page.show:
+          id: boot_page
+      - script.execute: ui_apply_settings_state
+      - delay: 250ms
+      - lambda: |-
+          id(display_awake) = true;
+          id(display_last_interaction_ms) = millis();
+          float brightness = id(settings_display_brightness).state / 100.0f;
+          if (brightness < 0.01f) brightness = 0.01f;
+          if (brightness > 1.0f) brightness = 1.0f;
+          auto call = id(display_backlight).turn_on();
+          call.set_brightness(brightness);
+          call.set_transition_length(2000);
+          call.perform();
+      - lvgl.lottie.start: boot_esphome_logo
+      - delay: 4s
+      - lvgl.lottie.stop: boot_esphome_logo
+      - script.execute: ui_show_tiles_1
+      - lvgl.page.show:
+          id: controls_page
+      - lambda: |-
+          id(boot_sequence_done) = true;
+          id(display_awake) = true;
+          id(display_last_interaction_ms) = millis();
+      - script.execute: ui_apply_settings_state
+      - delay: 500ms
+      - lambda: |-
+          lvgl_esphome_snapshot_cache_page(id(controls_root_1));
+          lvgl_esphome_snapshot_cache_page(id(controls_root_2));
+          lvgl_esphome_snapshot_cache_page(id(controls_root_3));
+          lvgl_esphome_snapshot_cache_page(id(controls_root_4));
+          lvgl_esphome_snapshot_cache_pair(id(controls_root_1), id(controls_root_2), 800);
+          lvgl_esphome_snapshot_cache_pair(id(controls_root_2), id(controls_root_3), 800);
+          lvgl_esphome_snapshot_cache_pair(id(controls_root_3), id(controls_root_4), 800);
+
+ota:
+  - platform: esphome
+
+api:
+  homeassistant_states: true
+  on_client_connected:
+    - lambda: |-
+        if (client_info.find("Home Assistant") != std::string::npos) {
+          id(ha_base_url) = client_address;
+        }
+    - script.execute: subscribe_media_player
+    - script.execute: subscribe_speaker_group_sensor
+
+time:
+  - platform: homeassistant
+    id: ha_time
+
+logger:
+  hardware_uart: UART0
+  level: INFO
+  initial_level: WARN
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  power_save_mode: none
+
+# Disable web_server first if audio streaming or SDIO stability regresses.
+
+web_server:
+  port: 80
+  version: 3

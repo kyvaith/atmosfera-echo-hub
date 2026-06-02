@@ -1,0 +1,528 @@
+# Speaker grouping model.
+# The group list comes from Home Assistant sensor.speaker_group and is filtered/sorted for the current player.
+globals:
+  - id: media_speaker_panel_open
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: speaker_group_subscription_gen
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: subscribed_speaker_group_entity
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: speaker_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: speaker_entity_ids
+    type: std::string[16]
+    restore_value: no
+  - id: speaker_names
+    type: std::string[16]
+    restore_value: no
+  - id: speaker_grouped
+    type: bool[16]
+    restore_value: no
+    initial_value: '{false}'
+  - id: speaker_volumes
+    type: float[16]
+    restore_value: no
+    initial_value: '{0.0f}'
+  - id: speaker_volume_pending_from_pct
+    type: int[16]
+    restore_value: no
+  - id: speaker_volume_pending_direction
+    type: int[16]
+    restore_value: no
+  - id: speaker_volume_pending_until
+    type: uint32_t[16]
+    restore_value: no
+  - id: speaker_join_member
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: speaker_unjoin_target
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: speaker_vol_target
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: group_vol_index
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+script:
+  - id: open_speaker_group_panel
+    mode: restart
+    then:
+      - lambda: |-
+          id(media_speaker_panel_open) = true;
+          lv_obj_clear_flag(id(speaker_group_panel), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_move_foreground(id(speaker_group_panel));
+      - script.execute: parse_speakers
+      - script.execute: update_group_state
+
+  - id: close_speaker_group_panel
+    mode: restart
+    then:
+      - lambda: |-
+          id(media_speaker_panel_open) = false;
+          lv_obj_add_flag(id(speaker_group_panel), LV_OBJ_FLAG_HIDDEN);
+
+  - id: subscribe_speaker_group_sensor
+    mode: restart
+    then:
+      - lambda: |-
+          if (esphome::api::global_api_server == nullptr) return;
+
+          std::string entity = id(speaker_group_entity).state;
+          if (entity.empty()) {
+            entity = "${speaker_group_sensor}";
+            auto call = id(speaker_group_entity).make_call();
+            call.set_value(entity);
+            call.perform();
+          }
+
+          if (entity == id(subscribed_speaker_group_entity)) {
+            ESP_LOGD("speaker_group", "Already subscribed to '%s'", entity.c_str());
+            return;
+          }
+
+          id(speaker_group_subscription_gen) += 1;
+          id(subscribed_speaker_group_entity) = entity;
+          const int gen = id(speaker_group_subscription_gen);
+          int *gen_ptr = &id(speaker_group_subscription_gen);
+          auto *api = esphome::api::global_api_server;
+          using state_cb = std::function<void(esphome::StringRef)>;
+
+          api->subscribe_home_assistant_state(entity, esphome::optional<std::string>("data"),
+              state_cb([gen, gen_ptr](esphome::StringRef state) {
+                if (gen != *gen_ptr) return;
+                id(speakers_sensor).publish_state(state.str());
+              }));
+
+          ESP_LOGI("speaker_group", "Subscribed to '%s' data attribute", entity.c_str());
+
+  - id: parse_speakers
+    mode: restart
+    then:
+      - lambda: |-
+          std::string raw = id(speakers_sensor).state;
+          if (raw.empty() || raw == "None" || raw == "unknown" || raw == "unavailable") {
+            ESP_LOGW("speaker_group", "No speaker_group sensor data - using fallback");
+            id(show_fallback_speaker).execute();
+            return;
+          }
+
+          auto trim = [](std::string value) {
+            while (!value.empty() && (value.front() == ' ' || value.front() == '\'' || value.front() == '"')) value.erase(0, 1);
+            while (!value.empty() && (value.back() == ' ' || value.back() == '\'' || value.back() == '"')) value.pop_back();
+            return value;
+          };
+
+          auto split_csv = [&](const std::string &value, size_t max_items) {
+            std::vector<std::string> out;
+            size_t start = 0;
+            while (start <= value.size() && out.size() < max_items) {
+              size_t end = value.find(',', start);
+              std::string token = end == std::string::npos ? value.substr(start) : value.substr(start, end - start);
+              token = trim(token);
+              if (!token.empty()) out.push_back(token);
+              if (end == std::string::npos) break;
+              start = end + 1;
+            }
+            return out;
+          };
+
+          size_t p1 = raw.find('|');
+          size_t p2 = p1 == std::string::npos ? std::string::npos : raw.find('|', p1 + 1);
+          size_t p3 = p2 == std::string::npos ? std::string::npos : raw.find('|', p2 + 1);
+          std::string ids_raw = p1 == std::string::npos ? raw : raw.substr(0, p1);
+          std::string names_raw = (p1 != std::string::npos && p2 != std::string::npos) ? raw.substr(p1 + 1, p2 - p1 - 1) : "";
+          std::string vols_raw = (p2 != std::string::npos && p3 != std::string::npos)
+              ? raw.substr(p2 + 1, p3 - p2 - 1)
+              : (p2 != std::string::npos ? raw.substr(p2 + 1) : "");
+          std::string mfrs_raw = p3 == std::string::npos ? "" : raw.substr(p3 + 1);
+
+          auto ids = split_csv(ids_raw, 16);
+          auto names = split_csv(names_raw, 16);
+          auto vols = split_csv(vols_raw, 16);
+          auto mfrs = split_csv(mfrs_raw, 16);
+
+          std::string old_entity_ids[16];
+          float old_volumes[16];
+          int old_pending_from_pct[16];
+          int old_pending_direction[16];
+          uint32_t old_pending_until[16];
+          for (int i = 0; i < 16; i++) {
+            old_entity_ids[i] = id(speaker_entity_ids)[i];
+            old_volumes[i] = id(speaker_volumes)[i];
+            old_pending_from_pct[i] = id(speaker_volume_pending_from_pct)[i];
+            old_pending_direction[i] = id(speaker_volume_pending_direction)[i];
+            old_pending_until[i] = id(speaker_volume_pending_until)[i];
+          }
+
+          for (int i = 0; i < 16; i++) {
+            id(speaker_entity_ids)[i] = "";
+            id(speaker_names)[i] = "";
+            id(speaker_grouped)[i] = false;
+            id(speaker_volumes)[i] = 0.0f;
+            id(speaker_volume_pending_from_pct)[i] = -1;
+            id(speaker_volume_pending_direction)[i] = 0;
+            id(speaker_volume_pending_until)[i] = 0;
+          }
+
+          if (ids.empty()) {
+            ESP_LOGW("speaker_group", "No speakers parsed - using fallback");
+            id(show_fallback_speaker).execute();
+            return;
+          }
+
+          for (auto &entity : ids) {
+            if (!entity.empty() && entity.rfind("media_player.", 0) != 0) {
+              entity = "media_player." + entity;
+            }
+          }
+
+          const std::string selected = id(media_player_entity).state;
+          bool found_selected = false;
+          for (const auto &entity : ids) {
+            if (entity == selected) {
+              found_selected = true;
+              break;
+            }
+          }
+          if (!found_selected) {
+            ESP_LOGW("speaker_group", "Selected player '%s' is not in speaker_group - using fallback", selected.c_str());
+            id(show_fallback_speaker).execute();
+            return;
+          }
+
+          std::string selected_mfr;
+          for (size_t i = 0; i < ids.size(); i++) {
+            if (ids[i] == selected && i < mfrs.size()) {
+              selected_mfr = mfrs[i];
+              break;
+            }
+          }
+
+          int count = 0;
+          for (size_t i = 0; i < ids.size() && count < 16; i++) {
+            if (!selected_mfr.empty() && i < mfrs.size() && !mfrs[i].empty() && mfrs[i] != selected_mfr) {
+              continue;
+            }
+            std::string entity = ids[i];
+            id(speaker_entity_ids)[count] = entity;
+            id(speaker_names)[count] = (i < names.size() && !names[i].empty()) ? names[i] : entity;
+            float parsed_volume = 0.0f;
+            if (i < vols.size()) {
+              auto vol = esphome::parse_number<float>(vols[i]);
+              if (vol.has_value()) {
+                parsed_volume = vol.value();
+              }
+            }
+            if (parsed_volume < 0.0f) parsed_volume = 0.0f;
+            if (parsed_volume > 1.0f) parsed_volume = 1.0f;
+            int parsed_pct = (int)(parsed_volume * 100.0f + 0.5f);
+
+            int old_index = -1;
+            for (int j = 0; j < 16; j++) {
+              if (old_entity_ids[j] == entity) {
+                old_index = j;
+                break;
+              }
+            }
+
+            id(speaker_volumes)[count] = parsed_volume;
+            if (old_index >= 0 && old_pending_until[old_index] != 0) {
+              uint32_t now = millis();
+              bool pending_active = (int32_t)(old_pending_until[old_index] - now) > 0;
+              int pending_from = old_pending_from_pct[old_index];
+              int pending_direction = old_pending_direction[old_index];
+              bool stale_echo = pending_active
+                  && ((pending_direction < 0 && parsed_pct >= pending_from)
+                      || (pending_direction > 0 && parsed_pct <= pending_from));
+              if (stale_echo) {
+                id(speaker_volumes)[count] = old_volumes[old_index];
+                id(speaker_volume_pending_from_pct)[count] = pending_from;
+                id(speaker_volume_pending_direction)[count] = pending_direction;
+                id(speaker_volume_pending_until)[count] = old_pending_until[old_index];
+              }
+            }
+            count++;
+          }
+
+          int selected_index = -1;
+          for (int i = 0; i < count; i++) {
+            if (id(speaker_entity_ids)[i] == selected) {
+              selected_index = i;
+              break;
+            }
+          }
+          if (selected_index > 0) {
+            std::swap(id(speaker_entity_ids)[0], id(speaker_entity_ids)[selected_index]);
+            std::swap(id(speaker_names)[0], id(speaker_names)[selected_index]);
+            std::swap(id(speaker_grouped)[0], id(speaker_grouped)[selected_index]);
+            std::swap(id(speaker_volumes)[0], id(speaker_volumes)[selected_index]);
+            std::swap(id(speaker_volume_pending_from_pct)[0], id(speaker_volume_pending_from_pct)[selected_index]);
+            std::swap(id(speaker_volume_pending_direction)[0], id(speaker_volume_pending_direction)[selected_index]);
+            std::swap(id(speaker_volume_pending_until)[0], id(speaker_volume_pending_until)[selected_index]);
+          }
+
+          for (int i = 1; i < count - 1; i++) {
+            for (int j = i + 1; j < count; j++) {
+              if (id(speaker_names)[i] > id(speaker_names)[j]) {
+                std::swap(id(speaker_entity_ids)[i], id(speaker_entity_ids)[j]);
+                std::swap(id(speaker_names)[i], id(speaker_names)[j]);
+                std::swap(id(speaker_grouped)[i], id(speaker_grouped)[j]);
+                std::swap(id(speaker_volumes)[i], id(speaker_volumes)[j]);
+                std::swap(id(speaker_volume_pending_from_pct)[i], id(speaker_volume_pending_from_pct)[j]);
+                std::swap(id(speaker_volume_pending_direction)[i], id(speaker_volume_pending_direction)[j]);
+                std::swap(id(speaker_volume_pending_until)[i], id(speaker_volume_pending_until)[j]);
+              }
+            }
+          }
+
+          id(speaker_count) = count;
+          ESP_LOGI("speaker_group", "Discovered %d compatible speakers", count);
+          id(update_group_state).execute();
+
+  - id: show_fallback_speaker
+    mode: restart
+    then:
+      - lambda: |-
+          std::string selected = id(media_player_entity).state;
+          if (selected.empty()) selected = "${tile_media_entity}";
+          for (int i = 0; i < 16; i++) {
+            id(speaker_entity_ids)[i] = "";
+            id(speaker_names)[i] = "";
+            id(speaker_grouped)[i] = false;
+            id(speaker_volumes)[i] = 0.0f;
+            id(speaker_volume_pending_from_pct)[i] = -1;
+            id(speaker_volume_pending_direction)[i] = 0;
+            id(speaker_volume_pending_until)[i] = 0;
+          }
+          id(speaker_count) = 1;
+          id(speaker_entity_ids)[0] = selected;
+          id(speaker_names)[0] = "This Speaker";
+          id(speaker_grouped)[0] = true;
+          float volume = id(media_volume_sensor).has_state() ? id(media_volume_sensor).state : 0.0f;
+          if (volume < 0.0f) volume = 0.0f;
+          if (volume > 1.0f) volume = 1.0f;
+          id(speaker_volumes)[0] = volume;
+          id(update_speaker_group_panel).execute();
+
+  - id: update_group_state
+    mode: restart
+    then:
+      - lambda: |-
+          std::string raw = id(group_members_sensor).state;
+          auto trim = [](std::string value) {
+            while (!value.empty() && (value.front() == '[' || value.front() == ' ' || value.front() == '\'' || value.front() == '"')) value.erase(0, 1);
+            while (!value.empty() && (value.back() == ']' || value.back() == ' ' || value.back() == '\'' || value.back() == '"')) value.pop_back();
+            return value;
+          };
+
+          std::vector<std::string> members;
+          size_t start = 0;
+          while (start <= raw.size()) {
+            size_t end = raw.find(',', start);
+            std::string token = end == std::string::npos ? raw.substr(start) : raw.substr(start, end - start);
+            token = trim(token);
+            if (!token.empty()) members.push_back(token);
+            if (end == std::string::npos) break;
+            start = end + 1;
+          }
+
+          const std::string selected = id(media_player_entity).state;
+          for (int i = 0; i < id(speaker_count); i++) {
+            if (id(speaker_entity_ids)[i] == selected) {
+              id(speaker_grouped)[i] = true;
+              continue;
+            }
+            bool grouped = false;
+            for (const auto &member : members) {
+              if (member == id(speaker_entity_ids)[i]) {
+                grouped = true;
+                break;
+              }
+            }
+            id(speaker_grouped)[i] = grouped;
+          }
+      - script.execute: update_speaker_group_panel
+
+  - id: update_speaker_group_panel
+    mode: restart
+    then:
+      - lambda: |-
+          lv_obj_t *rows[] = {id(speaker_row_0), id(speaker_row_1), id(speaker_row_2), id(speaker_row_3),
+                              id(speaker_row_4), id(speaker_row_5), id(speaker_row_6), id(speaker_row_7),
+                              id(speaker_row_8), id(speaker_row_9), id(speaker_row_10), id(speaker_row_11),
+                              id(speaker_row_12), id(speaker_row_13), id(speaker_row_14), id(speaker_row_15)};
+          lv_obj_t *names[] = {id(speaker_name_0), id(speaker_name_1), id(speaker_name_2), id(speaker_name_3),
+                               id(speaker_name_4), id(speaker_name_5), id(speaker_name_6), id(speaker_name_7),
+                               id(speaker_name_8), id(speaker_name_9), id(speaker_name_10), id(speaker_name_11),
+                               id(speaker_name_12), id(speaker_name_13), id(speaker_name_14), id(speaker_name_15)};
+          lv_obj_t *states[] = {id(speaker_state_0), id(speaker_state_1), id(speaker_state_2), id(speaker_state_3),
+                                id(speaker_state_4), id(speaker_state_5), id(speaker_state_6), id(speaker_state_7),
+                                id(speaker_state_8), id(speaker_state_9), id(speaker_state_10), id(speaker_state_11),
+                                id(speaker_state_12), id(speaker_state_13), id(speaker_state_14), id(speaker_state_15)};
+          lv_obj_t *volumes[] = {id(speaker_volume_0), id(speaker_volume_1), id(speaker_volume_2), id(speaker_volume_3),
+                                 id(speaker_volume_4), id(speaker_volume_5), id(speaker_volume_6), id(speaker_volume_7),
+                                 id(speaker_volume_8), id(speaker_volume_9), id(speaker_volume_10), id(speaker_volume_11),
+                                 id(speaker_volume_12), id(speaker_volume_13), id(speaker_volume_14), id(speaker_volume_15)};
+
+          int grouped_count = 0;
+          for (int i = 0; i < id(speaker_count); i++) {
+            if (id(speaker_grouped)[i]) grouped_count++;
+          }
+          char group_buf[48];
+          snprintf(group_buf, sizeof(group_buf), "%d speakers", grouped_count);
+          lv_label_set_text(id(speaker_group_count_label), group_buf);
+
+          for (int i = 0; i < 16; i++) {
+            if (i >= id(speaker_count)) {
+              lv_obj_add_flag(rows[i], LV_OBJ_FLAG_HIDDEN);
+              continue;
+            }
+
+            lv_obj_clear_flag(rows[i], LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(names[i], id(speaker_names)[i].c_str());
+            lv_label_set_text(states[i], id(speaker_grouped)[i] ? "Grouped" : "Available");
+
+            int pct = (int)(id(speaker_volumes)[i] * 100.0f + 0.5f);
+            char vol_buf[12];
+            snprintf(vol_buf, sizeof(vol_buf), "%d%%", pct);
+            lv_label_set_text(volumes[i], vol_buf);
+
+            if (id(speaker_grouped)[i]) {
+              lv_obj_set_style_bg_color(rows[i], lv_color_hex(0x173B34), 0);
+              lv_obj_set_style_border_color(rows[i], lv_color_hex(0x8CEED1), 0);
+              lv_obj_set_style_text_color(states[i], lv_color_hex(0xA8F4DF), 0);
+            } else {
+              lv_obj_set_style_bg_color(rows[i], lv_color_hex(0x1B1F2A), 0);
+              lv_obj_set_style_border_color(rows[i], lv_color_hex(0x343B4C), 0);
+              lv_obj_set_style_text_color(states[i], lv_color_hex(0xAEB4C2), 0);
+            }
+          }
+
+  - id: speaker_toggle
+    mode: single
+    parameters:
+      slot: int
+    then:
+      - lambda: |-
+          if (slot <= 0 || slot >= id(speaker_count)) return;
+          if (id(speaker_grouped)[slot]) {
+            id(speaker_unjoin_target) = id(speaker_entity_ids)[slot];
+            id(do_speaker_unjoin).execute();
+          } else {
+            id(speaker_join_member) = id(speaker_entity_ids)[slot];
+            id(do_speaker_join).execute();
+          }
+
+  - id: do_speaker_join
+    mode: single
+    then:
+      - homeassistant.service:
+          service: media_player.join
+          variables:
+            target: !lambda 'return id(media_player_entity).state;'
+            member: !lambda 'return id(speaker_join_member);'
+          data_template:
+            entity_id: "{{ target }}"
+            group_members: "{{ member }}"
+
+  - id: do_speaker_unjoin
+    mode: single
+    then:
+      - homeassistant.service:
+          service: media_player.unjoin
+          variables:
+            target: !lambda 'return id(speaker_unjoin_target);'
+          data_template:
+            entity_id: "{{ target }}"
+
+  - id: speaker_volume_change
+    mode: restart
+    parameters:
+      slot: int
+      direction: int
+    then:
+      - lambda: |-
+          if (slot < 0 || slot >= id(speaker_count)) return;
+          id(speaker_vol_target) = id(speaker_entity_ids)[slot];
+          int current_pct = (int)(id(speaker_volumes)[slot] * 100.0f + 0.5f);
+          int optimistic_pct = current_pct + (direction > 0 ? 1 : -1);
+          if (optimistic_pct < 0) optimistic_pct = 0;
+          if (optimistic_pct > 100) optimistic_pct = 100;
+          if (optimistic_pct != current_pct) {
+            id(speaker_volumes)[slot] = optimistic_pct / 100.0f;
+            id(speaker_volume_pending_from_pct)[slot] = current_pct;
+            id(speaker_volume_pending_direction)[slot] = direction > 0 ? 1 : -1;
+            id(speaker_volume_pending_until)[slot] = millis() + 1500;
+            id(update_speaker_group_panel).execute();
+          }
+      - homeassistant.service:
+          service: !lambda 'return direction > 0 ? "media_player.volume_up" : "media_player.volume_down";'
+          variables:
+            target: !lambda 'return id(speaker_vol_target);'
+          data_template:
+            entity_id: "{{ target }}"
+
+  - id: group_volume_step
+    mode: restart
+    parameters:
+      direction: int
+    then:
+      - lambda: |-
+          id(group_vol_index) = 0;
+      - while:
+          condition:
+            lambda: |-
+              int i = id(group_vol_index);
+              while (i < id(speaker_count) && !id(speaker_grouped)[i]) i++;
+              if (i >= id(speaker_count)) return false;
+              id(speaker_vol_target) = id(speaker_entity_ids)[i];
+              int current_pct = (int)(id(speaker_volumes)[i] * 100.0f + 0.5f);
+              int optimistic_pct = current_pct + (direction > 0 ? 1 : -1);
+              if (optimistic_pct < 0) optimistic_pct = 0;
+              if (optimistic_pct > 100) optimistic_pct = 100;
+              if (optimistic_pct != current_pct) {
+                id(speaker_volumes)[i] = optimistic_pct / 100.0f;
+                id(speaker_volume_pending_from_pct)[i] = current_pct;
+                id(speaker_volume_pending_direction)[i] = direction > 0 ? 1 : -1;
+                id(speaker_volume_pending_until)[i] = millis() + 1500;
+              }
+              id(group_vol_index) = i + 1;
+              id(update_speaker_group_panel).execute();
+              return true;
+          then:
+            - homeassistant.service:
+                service: !lambda 'return direction > 0 ? "media_player.volume_up" : "media_player.volume_down";'
+                variables:
+                  target: !lambda 'return id(speaker_vol_target);'
+                data_template:
+                  entity_id: "{{ target }}"
+            - delay: 120ms
+
+text_sensor:
+  - platform: template
+    id: speakers_sensor
+    internal: true
+    on_value:
+      then:
+        - script.execute: parse_speakers
+
+  - platform: template
+    id: group_members_sensor
+    internal: true
+    on_value:
+      then:
+        - script.execute: update_group_state

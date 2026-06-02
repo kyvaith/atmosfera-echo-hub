@@ -1,0 +1,493 @@
+# Dynamic media player runtime.
+# This handles the selected Home Assistant media_player, dynamic subscriptions and playback state UI.
+globals:
+  - id: subscription_gen
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: subscribed_media_player_entity
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: ha_base_url
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: last_media_position
+    type: float
+    restore_value: no
+    initial_value: '0.0f'
+  - id: last_media_progress_percent
+    type: int
+    restore_value: no
+    initial_value: '-1'
+  - id: last_position_timestamp
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: title_received_once
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ha_position_epoch
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: artist_has_content
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: is_track_info_hidden
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: volume_updating_from_ha
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: volume_pending_pct
+    type: int
+    restore_value: no
+    initial_value: '-1'
+  - id: volume_pending_until
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: last_artwork_url
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+
+script:
+  - id: subscribe_media_player
+    mode: restart
+    then:
+      - lambda: |-
+          if (esphome::api::global_api_server == nullptr) return;
+
+          std::string entity = id(media_player_entity).state;
+          if (entity.empty()) {
+            entity = "${tile_media_entity}";
+            auto call = id(media_player_entity).make_call();
+            call.set_value(entity);
+            call.perform();
+          }
+
+          if (entity.rfind("media_player.", 0) != 0) {
+            id(subscription_gen) += 1;
+            id(subscribed_media_player_entity) = "";
+            ESP_LOGW("media_select", "Invalid entity '%s' - must start with media_player.", entity.c_str());
+            return;
+          }
+
+          if (entity == id(subscribed_media_player_entity)) {
+            ESP_LOGD("media_select", "Already subscribed to '%s'", entity.c_str());
+            return;
+          }
+
+          id(title_received_once) = false;
+          id(last_media_position) = 0.0f;
+          id(last_media_progress_percent) = -1;
+          id(ha_position_epoch) = 0;
+          id(last_position_timestamp) = 0;
+          id(last_artwork_url) = "";
+          id(artist_has_content) = false;
+          id(subscription_gen) += 1;
+          id(subscribed_media_player_entity) = entity;
+
+          lv_label_set_text(id(top_status_label), entity.c_str());
+          lv_label_set_text(id(title_label), "No Track");
+          lv_label_set_text(id(artist_label), "-");
+          lv_label_set_text(id(album_label), "");
+          lv_label_set_text(id(media_time_label), "0:00 / 0:00");
+          lv_bar_set_value(id(media_progress_bar), 0, LV_ANIM_OFF);
+          lv_obj_add_flag(id(album_art_background_widget), LV_OBJ_FLAG_HIDDEN);
+
+          int gen = id(subscription_gen);
+          int *gen_ptr = &id(subscription_gen);
+          auto *api = esphome::api::global_api_server;
+          using state_cb = std::function<void(esphome::StringRef)>;
+
+          auto sub_text = [&](const std::string &attr, esphome::text_sensor::TextSensor *sensor) {
+            api->subscribe_home_assistant_state(entity, esphome::optional<std::string>(attr),
+                state_cb([gen, gen_ptr, sensor](esphome::StringRef state) {
+                  if (gen != *gen_ptr) return;
+                  sensor->publish_state(state.str());
+                }));
+          };
+
+          auto sub_num = [&](const std::string &attr, esphome::sensor::Sensor *sensor) {
+            api->subscribe_home_assistant_state(entity, esphome::optional<std::string>(attr),
+                state_cb([gen, gen_ptr, sensor](esphome::StringRef state) {
+                  if (gen != *gen_ptr) return;
+                  auto v = esphome::parse_number<float>(state.str());
+                  if (v.has_value()) sensor->publish_state(v.value());
+                }));
+          };
+
+          sub_text("media_title", id(media_title_sensor));
+          sub_text("media_artist", id(media_artist_sensor));
+          sub_text("media_album_name", id(media_album_sensor));
+          sub_text("entity_picture", id(media_entity_picture_sensor));
+          api->subscribe_home_assistant_state(entity, esphome::optional<std::string>(""),
+              state_cb([gen, gen_ptr](esphome::StringRef state) {
+                if (gen != *gen_ptr) return;
+                id(media_player_state_sensor).publish_state(state.str());
+              }));
+          sub_text("media_position_updated_at", id(media_position_updated_at_sensor));
+          sub_num("media_duration", id(media_duration_sensor));
+          sub_num("media_position", id(media_position_sensor));
+          sub_num("volume_level", id(media_volume_sensor));
+          sub_text("source", id(media_source_sensor));
+          sub_text("group_members", id(group_members_sensor));
+
+          ESP_LOGI("media_select", "Subscribed to '%s'", entity.c_str());
+
+  - id: show_track_info
+    mode: restart
+    then:
+      - lambda: |-
+          id(is_track_info_hidden) = false;
+          lv_obj_clear_flag(id(title_label), LV_OBJ_FLAG_HIDDEN);
+          if (id(artist_has_content)) {
+            lv_obj_clear_flag(id(artist_label), LV_OBJ_FLAG_HIDDEN);
+          }
+          lv_obj_clear_flag(id(album_label), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_clear_flag(id(media_time_label), LV_OBJ_FLAG_HIDDEN);
+
+  - id: hide_track_info
+    mode: restart
+    then:
+      - lambda: |-
+          id(is_track_info_hidden) = true;
+          lv_obj_add_flag(id(title_label), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(artist_label), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(album_label), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(media_time_label), LV_OBJ_FLAG_HIDDEN);
+
+  - id: start_hide_track_info_timer
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return id(auto_show_track_info).state && id(track_info_duration).state > 0;'
+          then:
+            - delay: !lambda 'return (uint32_t)(id(track_info_duration).state * 1000.0f);'
+            - if:
+                condition:
+                  lambda: |-
+                    return id(media_player_state_sensor).has_state()
+                        && id(media_player_state_sensor).state == "playing";
+                then:
+                  - script.execute: hide_track_info
+
+  - id: debounce_artwork_download
+    mode: restart
+    then:
+      - delay: 100ms
+      - if:
+          condition:
+            lambda: 'return !id(last_artwork_url).empty();'
+          then:
+            - lambda: |-
+                ESP_LOGD("artwork", "Loading media artwork: %s", id(last_artwork_url).c_str());
+                id(album_art_background).set_url(id(last_artwork_url));
+                id(album_art_background).update();
+
+  - id: refresh_progress_bar_from_state
+    mode: restart
+    then:
+      - lambda: |-
+          if (!id(show_progress_bar).state) {
+            lv_obj_add_flag(id(media_progress_bar), LV_OBJ_FLAG_HIDDEN);
+            id(last_media_progress_percent) = -1;
+            return;
+          }
+
+          lv_obj_clear_flag(id(media_progress_bar), LV_OBJ_FLAG_HIDDEN);
+          float dur = id(media_duration_sensor).has_state() ? id(media_duration_sensor).state : 0.0f;
+          float pos = id(last_media_position);
+          bool playing = id(media_player_state_sensor).has_state()
+              && id(media_player_state_sensor).state == "playing";
+
+          auto t = id(ha_time).now();
+          if (playing && t.is_valid() && id(ha_position_epoch) != 0 && id(media_position_sensor).has_state()) {
+            pos = id(media_position_sensor).state + (float)(t.timestamp - id(ha_position_epoch));
+          }
+
+          if (pos < 0.0f) pos = 0.0f;
+          if (dur > 0.0f && pos > dur) pos = dur;
+          id(last_media_position) = pos;
+          if (t.is_valid()) id(last_position_timestamp) = t.timestamp;
+
+          const int progress_range = ${playback_progress_bar_range};
+          int value = 0;
+          if (dur > 0.0f) {
+            value = (int)((pos / dur) * (float)progress_range + 0.5f);
+          }
+          if (value < 0) value = 0;
+          if (value > progress_range) value = progress_range;
+          if (value != id(last_media_progress_percent)) {
+            id(last_media_progress_percent) = value;
+            lv_bar_set_range(id(media_progress_bar), 0, progress_range);
+            lv_bar_set_value(id(media_progress_bar), value, LV_ANIM_OFF);
+          }
+
+          int e = (int)pos;
+          if (e < 0) e = 0;
+          char buf[40];
+          if (id(show_remaining_time).state) {
+            int rem = (int)(dur - pos);
+            if (rem < 0) rem = 0;
+            if (dur >= 3600.0f) {
+              snprintf(buf, sizeof(buf), "%d:%02d:%02d / -%d:%02d:%02d",
+                       e / 3600, (e % 3600) / 60, e % 60,
+                       rem / 3600, (rem % 3600) / 60, rem % 60);
+            } else {
+              snprintf(buf, sizeof(buf), "%d:%02d / -%d:%02d", e / 60, e % 60, rem / 60, rem % 60);
+            }
+          } else {
+            int d = (int)dur;
+            if (d < 0) d = 0;
+            if (dur >= 3600.0f) {
+              snprintf(buf, sizeof(buf), "%d:%02d:%02d / %d:%02d:%02d",
+                       e / 3600, (e % 3600) / 60, e % 60,
+                       d / 3600, (d % 3600) / 60, d % 60);
+            } else {
+              snprintf(buf, sizeof(buf), "%d:%02d / %d:%02d", e / 60, e % 60, d / 60, d % 60);
+            }
+          }
+          lv_label_set_text(id(media_time_label), buf);
+
+  - id: show_volume_overlay
+    mode: restart
+    then:
+      - lambda: |-
+          lv_obj_clear_flag(id(volume_overlay), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_move_foreground(id(volume_overlay));
+      - script.execute: volume_overlay_timeout
+
+  - id: volume_overlay_timeout
+    mode: restart
+    then:
+      - delay: 2500ms
+      - lvgl.widget.hide: volume_overlay
+
+  - id: main_volume_step
+    mode: restart
+    parameters:
+      direction: int
+    then:
+      - lambda: |-
+          int pct = lv_arc_get_value(id(volume_arc)) + (direction > 0 ? 1 : -1);
+          if (pct < 0) pct = 0;
+          if (pct > 100) pct = 100;
+          id(volume_updating_from_ha) = false;
+          lv_arc_set_value(id(volume_arc), pct);
+      - script.execute: show_volume_overlay
+
+  - id: media_apply_artwork
+    mode: restart
+    then:
+      - lvgl.image.update:
+          id: album_art_background_widget
+          src: album_art_background
+      - lvgl.widget.show: album_art_background_widget
+      - lvgl.widget.hide: artwork_error_label
+      - lambda: |-
+          lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
+      - script.execute: start_hide_track_info_timer
+
+  - id: media_handle_artwork_error
+    mode: restart
+    then:
+      - lvgl.widget.hide: album_art_background_widget
+      - lvgl.widget.show: artwork_error_label
+      - lambda: |-
+          if (id(ui_page) == 0) {
+            lv_obj_clear_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
+          }
+
+text_sensor:
+  - platform: template
+    id: media_title_sensor
+    internal: true
+    on_value:
+      - lambda: |-
+          if (x.empty()) return;
+          if (id(auto_show_track_info).state) id(show_track_info).execute();
+          lv_label_set_text(id(title_label), x.c_str());
+          if (id(title_received_once)) {
+            id(last_media_position) = 0.0f;
+            id(last_media_progress_percent) = -1;
+            id(ha_position_epoch) = 0;
+            auto t = id(ha_time).now();
+            if (t.is_valid()) id(last_position_timestamp) = t.timestamp;
+            lv_bar_set_value(id(media_progress_bar), 0, LV_ANIM_OFF);
+            id(refresh_progress_bar_from_state).execute();
+          } else {
+            id(title_received_once) = true;
+          }
+          id(start_hide_track_info_timer).execute();
+
+  - platform: template
+    id: media_artist_sensor
+    internal: true
+    on_value:
+      - lambda: |-
+          id(artist_has_content) = !x.empty() && x != "-";
+          if (id(artist_has_content)) {
+            lv_label_set_text(id(artist_label), x.c_str());
+            if (!id(is_track_info_hidden)) lv_obj_clear_flag(id(artist_label), LV_OBJ_FLAG_HIDDEN);
+          } else {
+            lv_label_set_text(id(artist_label), "-");
+            lv_obj_add_flag(id(artist_label), LV_OBJ_FLAG_HIDDEN);
+          }
+
+  - platform: template
+    id: media_album_sensor
+    internal: true
+    on_value:
+      - lvgl.label.update:
+          id: album_label
+          text: !lambda 'return x;'
+
+  - platform: template
+    id: media_entity_picture_sensor
+    internal: true
+    on_value:
+      - lambda: |-
+          if (x.empty()) {
+            id(last_artwork_url) = "";
+            id(media_handle_artwork_error).execute();
+            return;
+          }
+
+          std::string path = x;
+          while (!path.empty() && (path.back() == '\n' || path.back() == '\r' || path.back() == ' ')) path.pop_back();
+          std::string url = (path.rfind("http://", 0) == 0 || path.rfind("https://", 0) == 0)
+              ? path : (id(ha_base_url) + path);
+          url = esphome::artwork_image::cap_artwork_url(url, ${artwork_size});
+          if (url == id(last_artwork_url)) return;
+          id(last_artwork_url) = url;
+          id(debounce_artwork_download).execute();
+
+  - platform: template
+    id: media_player_state_sensor
+    internal: true
+    on_value:
+      - lambda: |-
+          if (x == "playing") {
+            lv_label_set_text(id(play_icon_label), "\uE034");
+            lv_obj_clear_flag(id(play_button), LV_OBJ_FLAG_HIDDEN);
+            if (id(auto_show_track_info).state) id(show_track_info).execute();
+            id(start_hide_track_info_timer).execute();
+          } else if (x == "paused" || x == "idle" || x == "off" || x == "standby") {
+            lv_label_set_text(id(play_icon_label), "\uE037");
+            id(start_hide_track_info_timer).stop();
+            if (x == "idle" || x == "off" || x == "standby") {
+              id(last_media_position) = 0.0f;
+              id(ha_position_epoch) = 0;
+              id(last_position_timestamp) = 0;
+              id(last_media_progress_percent) = -1;
+              lv_bar_set_value(id(media_progress_bar), 0, LV_ANIM_OFF);
+            }
+          }
+          id(refresh_progress_bar_from_state).execute();
+
+  - platform: template
+    id: media_position_updated_at_sensor
+    internal: true
+    on_value:
+      - lambda: |-
+          int yr, mo, dy, hr, mn, sc;
+          if (sscanf(x.c_str(), "%d-%d-%dT%d:%d:%d", &yr, &mo, &dy, &hr, &mn, &sc) != 6 &&
+              sscanf(x.c_str(), "%d-%d-%d %d:%d:%d", &yr, &mo, &dy, &hr, &mn, &sc) != 6) {
+            return;
+          }
+          int y = yr;
+          int m = mo;
+          if (m <= 2) {
+            y--;
+            m += 12;
+          }
+          long days = 365L * y + y / 4 - y / 100 + y / 400 + (153 * (m - 3) + 2) / 5 + dy - 719469;
+          int epoch = (int)(days * 86400L + hr * 3600 + mn * 60 + sc);
+          id(ha_position_epoch) = epoch;
+          if (id(media_position_sensor).has_state()) {
+            id(last_position_timestamp) = epoch;
+            float anchor = id(media_position_sensor).state;
+            auto t = id(ha_time).now();
+            if (t.is_valid()) anchor += (float)(t.timestamp - epoch);
+            if (anchor < 0.0f) anchor = 0.0f;
+            id(last_media_position) = anchor;
+          }
+          id(refresh_progress_bar_from_state).execute();
+
+  - platform: template
+    id: media_source_sensor
+    internal: true
+
+sensor:
+  - platform: template
+    id: media_duration_sensor
+    internal: true
+    on_value:
+      - script.execute: refresh_progress_bar_from_state
+
+  - platform: template
+    id: media_position_sensor
+    internal: true
+    on_value:
+      - lambda: |-
+          id(last_media_position) = x;
+          auto t = id(ha_time).now();
+          if (id(ha_position_epoch) != 0) {
+            id(last_position_timestamp) = id(ha_position_epoch);
+            if (t.is_valid()) id(last_media_position) = x + (float)(t.timestamp - id(ha_position_epoch));
+          } else if (t.is_valid()) {
+            id(last_position_timestamp) = t.timestamp;
+          }
+          if (id(last_media_position) < 0.0f) id(last_media_position) = 0.0f;
+          id(refresh_progress_bar_from_state).execute();
+
+  - platform: template
+    id: media_volume_sensor
+    internal: true
+    on_value:
+      - lambda: |-
+          float volume = x;
+          if (volume < 0.0f) volume = 0.0f;
+          if (volume > 1.0f) volume = 1.0f;
+          int pct = (int)(volume * 100.0f + 0.5f);
+          if (id(volume_pending_until) != 0) {
+            uint32_t now = millis();
+            bool pending_active = (int32_t)(id(volume_pending_until) - now) > 0;
+            if (pending_active && pct != id(volume_pending_pct)) {
+              ESP_LOGD("volume", "Ignoring stale volume echo: %d%% while waiting for %d%%", pct, id(volume_pending_pct));
+              return;
+            }
+            id(volume_pending_pct) = -1;
+            id(volume_pending_until) = 0;
+          }
+          id(volume_updating_from_ha) = true;
+          lv_arc_set_value(id(volume_arc), pct);
+          id(volume_updating_from_ha) = false;
+          char buf[8];
+          snprintf(buf, sizeof(buf), "%d%%", pct);
+          lv_label_set_text(id(volume_pct_label), buf);
+          if (id(speaker_count) <= 1) {
+            id(speaker_volumes)[0] = volume;
+            id(update_speaker_group_panel).execute();
+          }
+
+interval:
+  - interval: ${playback_refresh_interval}
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(media_player_state_sensor).has_state()
+                  && id(media_player_state_sensor).state == "playing";
+          then:
+            - script.execute: refresh_progress_bar_from_state

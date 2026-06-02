@@ -1,0 +1,114 @@
+# Material 3 typography for the round LVGL UI.
+# Roboto keeps the interface aligned with Android/WearOS, while Material Symbols
+# are reserved for icon-only controls so text labels stay crisp and readable.
+font:
+  - file:
+      type: gfonts
+      family: Roboto
+      weight: 400
+    id: roboto_14
+    size: 14
+    bpp: 4
+    glyphsets:
+      - GF_Latin_Core
+    ignore_missing_glyphs: true
+
+  - file:
+      type: gfonts
+      family: Roboto
+      weight: 400
+    id: roboto_16
+    size: 16
+    bpp: 4
+    glyphsets:
+      - GF_Latin_Core
+    ignore_missing_glyphs: true
+
+  - file:
+      type: gfonts
+      family: Roboto
+      weight: 400
+    id: roboto_18
+    size: 18
+    bpp: 4
+    glyphsets:
+      - GF_Latin_Core
+    ignore_missing_glyphs: true
+
+  - file:
+      type: gfonts
+      family: Roboto
+      weight: 500
+    id: roboto_20
+    size: 20
+    bpp: 4
+    glyphsets:
+      - GF_Latin_Core
+    ignore_missing_glyphs: true
+
+  - file:
+      type: gfonts
+      family: Roboto
+      weight: 500
+    id: roboto_24
+    size: 24
+    bpp: 4
+    glyphsets:
+      - GF_Latin_Core
+    ignore_missing_glyphs: true
+
+  - file:
+      type: gfonts
+      family: Roboto
+      weight: 500
+    id: roboto_30
+    size: 30
+    bpp: 4
+    glyphsets:
+      - GF_Latin_Core
+    ignore_missing_glyphs: true
+
+  - file:
+      type: gfonts
+      family: Roboto
+      weight: 500
+    id: roboto_34
+    size: 34
+    bpp: 4
+    glyphsets:
+      - GF_Latin_Core
+    ignore_missing_glyphs: true
+
+  - file:
+      type: gfonts
+      family: Roboto
+      weight: 500
+    id: roboto_36
+    size: 36
+    bpp: 4
+    glyphsets:
+      - GF_Latin_Core
+    ignore_missing_glyphs: true
+
+  - file: "gfonts://Material+Symbols+Rounded"
+    id: material_symbols_24
+    size: 24
+    bpp: 4
+    glyphs:
+      - "\U0000e5cd" # close
+
+  - file: "gfonts://Material+Symbols+Rounded"
+    id: material_symbols_30
+    size: 30
+    bpp: 4
+    glyphs:
+      - "\U0000e044" # skip_next
+      - "\U0000e045" # skip_previous
+
+  - file: "gfonts://Material+Symbols+Rounded"
+    id: material_symbols_36
+    size: 36
+    bpp: 4
+    glyphs:
+      - "\U0000e034" # pause
+      - "\U0000e037" # play_arrow

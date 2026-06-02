@@ -1,0 +1,385 @@
+# On-device settings page.
+# Settings mirror the Home Assistant config entities so debugging can happen directly on the hub.
+lvgl:
+  pages:
+    - id: settings_page
+      bg_color: 0x05070C
+      widgets:
+        - obj:
+            id: settings_root
+            width: 800
+            height: 800
+            align: CENTER
+            bg_color: 0x05070C
+            border_width: 0
+            radius: 400
+            pad_all: 0
+            scrollable: true
+            scrollbar_mode: auto
+            widgets:
+              - obj:
+                  width: 760
+                  height: 760
+                  align: CENTER
+                  bg_color: 0x10131B
+                  border_width: 1
+                  border_color: 0x2A3344
+                  radius: 380
+                  pad_all: 0
+                  scrollable: false
+                  gesture_bubble: true
+              - label:
+                  text: "Settings"
+                  align: TOP_MID
+                  y: 54
+                  width: 520
+                  text_align: CENTER
+                  text_color: 0xF4EFFA
+                  text_font: roboto_24
+              - label:
+                  text: "Device"
+                  align: TOP_MID
+                  y: 88
+                  width: 140
+                  text_align: CENTER
+                  bg_color: 0x1B1F2A
+                  bg_opa: 80%
+                  radius: 16
+                  pad_top: 4
+                  pad_bottom: 4
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+              - button:
+                  id: settings_true_colour_button
+                  x: 104
+                  y: 134
+                  width: 592
+                  height: 82
+                  radius: 41
+                  bg_color: 0x173B34
+                  border_width: 1
+                  border_color: 0x8CEED1
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "True Colour"
+                        x: 28
+                        y: 16
+                        text_color: 0xFFFFFF
+                        text_font: roboto_20
+                    - label:
+                        id: settings_true_colour_value
+                        text: "ON"
+                        align: RIGHT_MID
+                        x: -30
+                        text_color: 0xA8F4DF
+                        text_font: roboto_24
+                    - label:
+                        id: settings_true_colour_note
+                        text: "RGB888 Active"
+                        x: 28
+                        y: 52
+                        text_color: 0xAEB4C2
+                        text_font: roboto_16
+                  on_click:
+                    then:
+                      - switch.toggle: settings_true_colour_switch
+                      - script.execute: ui_apply_settings_state
+              - button:
+                  id: settings_screen_tone_button
+                  x: 104
+                  y: 224
+                  width: 592
+                  height: 76
+                  radius: 38
+                  bg_color: 0x1B1F2A
+                  border_width: 1
+                  border_color: 0x343B4C
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Screen Tone"
+                        x: 28
+                        y: 22
+                        text_color: 0xFFFFFF
+                        text_font: roboto_20
+                    - label:
+                        id: settings_screen_tone_value
+                        text: "OFF"
+                        align: RIGHT_MID
+                        x: -30
+                        text_color: 0xAEB4C2
+                        text_font: roboto_24
+                  on_click:
+                    then:
+                      - switch.toggle: settings_screen_tone_switch
+                      - script.execute: ui_apply_settings_state
+              - button:
+                  id: settings_perf_overlay_button
+                  x: 104
+                  y: 310
+                  width: 592
+                  height: 76
+                  radius: 38
+                  bg_color: 0x1B1F2A
+                  border_width: 1
+                  border_color: 0x343B4C
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Performance HUD"
+                        x: 28
+                        y: 24
+                        text_color: 0xFFFFFF
+                        text_font: roboto_20
+                    - label:
+                        id: settings_perf_overlay_value
+                        text: "OFF"
+                        align: RIGHT_MID
+                        x: -30
+                        text_color: 0xAEB4C2
+                        text_font: roboto_24
+                  on_click:
+                    then:
+                      - switch.toggle: settings_perf_overlay_switch
+                      - script.execute: ui_apply_settings_state
+              - button:
+                  id: settings_system_logs_button
+                  x: 104
+                  y: 400
+                  width: 592
+                  height: 76
+                  radius: 38
+                  bg_color: 0x1B1F2A
+                  border_width: 1
+                  border_color: 0x343B4C
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "System Logs"
+                        x: 28
+                        y: 24
+                        text_color: 0xFFFFFF
+                        text_font: roboto_20
+                    - label:
+                        id: settings_system_logs_value
+                        text: "OFF"
+                        align: RIGHT_MID
+                        x: -30
+                        text_color: 0xAEB4C2
+                        text_font: roboto_24
+                  on_click:
+                    then:
+                      - switch.toggle: settings_system_logs_switch
+                      - script.execute: ui_apply_settings_state
+              - button:
+                  id: settings_perf_logs_button
+                  x: 104
+                  y: 490
+                  width: 592
+                  height: 76
+                  radius: 38
+                  bg_color: 0x1B1F2A
+                  border_width: 1
+                  border_color: 0x343B4C
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Performance Logs"
+                        x: 28
+                        y: 24
+                        text_color: 0xFFFFFF
+                        text_font: roboto_20
+                    - label:
+                        id: settings_perf_logs_value
+                        text: "OFF"
+                        align: RIGHT_MID
+                        x: -30
+                        text_color: 0xAEB4C2
+                        text_font: roboto_24
+                  on_click:
+                    then:
+                      - switch.toggle: settings_perf_logs_switch
+                      - script.execute: ui_apply_settings_state
+              - button:
+                  id: settings_swipe_logs_button
+                  x: 104
+                  y: 580
+                  width: 592
+                  height: 76
+                  radius: 38
+                  bg_color: 0x1B1F2A
+                  border_width: 1
+                  border_color: 0x343B4C
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Swipe Debug"
+                        x: 28
+                        y: 24
+                        text_color: 0xFFFFFF
+                        text_font: roboto_20
+                    - label:
+                        id: settings_swipe_logs_value
+                        text: "OFF"
+                        align: RIGHT_MID
+                        x: -30
+                        text_color: 0xAEB4C2
+                        text_font: roboto_24
+                  on_click:
+                    then:
+                      - switch.toggle: settings_swipe_logs_switch
+                      - script.execute: ui_apply_settings_state
+              - button:
+                  id: settings_beta_firmware_button
+                  x: 104
+                  y: 670
+                  width: 592
+                  height: 76
+                  radius: 38
+                  bg_color: 0x1B1F2A
+                  border_width: 1
+                  border_color: 0x343B4C
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Beta Firmware"
+                        x: 28
+                        y: 24
+                        text_color: 0xFFFFFF
+                        text_font: roboto_20
+                    - label:
+                        id: settings_beta_firmware_value
+                        text: "OFF"
+                        align: RIGHT_MID
+                        x: -30
+                        text_color: 0xAEB4C2
+                        text_font: roboto_24
+                  on_click:
+                    then:
+                      - switch.toggle: settings_beta_firmware_switch
+                      - script.execute: ui_apply_settings_state
+              - button:
+                  id: settings_display_brightness_button
+                  x: 104
+                  y: 760
+                  width: 592
+                  height: 76
+                  radius: 38
+                  bg_color: 0x1B1F2A
+                  border_width: 1
+                  border_color: 0x343B4C
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Brightness"
+                        x: 28
+                        y: 24
+                        text_color: 0xFFFFFF
+                        text_font: roboto_20
+                    - label:
+                        id: settings_display_brightness_value
+                        text: "85%"
+                        align: RIGHT_MID
+                        x: -30
+                        text_color: 0xEADDFF
+                        text_font: roboto_24
+                  on_click:
+                    then:
+                      - number.set:
+                          id: settings_display_brightness
+                          value: !lambda |-
+                            float value = id(settings_display_brightness).state + 10.0f;
+                            if (value > 100.0f) value = 40.0f;
+                            return value;
+                      - script.execute: ui_apply_settings_state
+              - button:
+                  id: settings_display_timeout_button
+                  x: 104
+                  y: 850
+                  width: 592
+                  height: 76
+                  radius: 38
+                  bg_color: 0x1B1F2A
+                  border_width: 1
+                  border_color: 0x343B4C
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Display Timeout"
+                        x: 28
+                        y: 24
+                        text_color: 0xFFFFFF
+                        text_font: roboto_20
+                    - label:
+                        id: settings_display_timeout_value
+                        text: "60s"
+                        align: RIGHT_MID
+                        x: -30
+                        text_color: 0xEADDFF
+                        text_font: roboto_24
+                  on_click:
+                    then:
+                      - number.set:
+                          id: settings_display_timeout
+                          value: !lambda |-
+                            float value = id(settings_display_timeout).state;
+                            if (value < 15.0f) return 15.0f;
+                            if (value < 30.0f) return 30.0f;
+                            if (value < 60.0f) return 60.0f;
+                            if (value < 120.0f) return 120.0f;
+                            if (value < 300.0f) return 300.0f;
+                            return 0.0f;
+                      - script.execute: ui_apply_settings_state
+              - label:
+                  text: ""
+                  align: BOTTOM_MID
+                  y: -78
+                  width: 520
+                  text_align: CENTER
+                  text_color: 0xAEB4C2
+                  text_font: roboto_16
+        - button:
+            id: settings_close_button
+            align: TOP_RIGHT
+            x: -72
+            y: 52
+            width: 70
+            height: 70
+            radius: 35
+            bg_color: 0x1B1F2A
+            border_width: 1
+            border_color: 0x343B4C
+            scrollable: false
+            widgets:
+              - label:
+                  text: "\uE5CD"
+                  align: CENTER
+                  text_color: 0xF4EFFA
+                  text_font: material_symbols_24
+            on_click:
+              then:
+                - script.execute: ui_show_tiles_1_from_settings
+        - obj:
+            id: screen_tone_overlay_settings
+            x: 0
+            y: 0
+            width: 800
+            height: 800
+            bg_color: 0xFFD7A8
+            bg_opa: 14%
+            border_width: 0
+            radius: 400
+            pad_all: 0
+            scrollable: false
+            clickable: false
+            hidden: true

@@ -1,0 +1,19 @@
+# LVGL renderer configuration.
+# Page definitions are split into modules/lvgl/pages so the renderer settings stay easy to scan.
+lvgl:
+  displays:
+    - my_display
+  touchscreens:
+    - my_touchscreen
+  update_interval: ${display_update_interval}
+  buffer_size: ${display_buffer_size}
+  direct_mode: true
+  byte_order: ${display_byte_order}
+  bg_color: 0x05070C
+  fps_benchmark: true
+  perf_monitor: true
+  color_depth: 32
+  use_ppa: true
+  use_ppa_img: true
+  default_font: roboto_14
+  text_font: roboto_24

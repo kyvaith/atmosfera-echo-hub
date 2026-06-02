@@ -1,0 +1,161 @@
+name: Release Firmware
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version, for example v0.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ESPHOME_VERSION: 2026.5.1
+  DEVICE_NAME: atmosfera-echo-hub
+  YAML_FILE: atmosfera-echo-hub.factory.yaml
+
+jobs:
+  release:
+    name: Build and release firmware
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME}"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "plain=${version#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Cache PlatformIO and ESPHome
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            .esphome
+          key: ${{ runner.os }}-pio-${{ hashFiles('**/*.yaml', '**/*.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-
+
+      - name: Install ESPHome
+        run: pip install "esphome==${ESPHOME_VERSION}"
+
+      - name: Provide CI-only secrets
+        run: |
+          cat > secrets.yaml <<'EOF'
+          wifi_ssid: ci
+          wifi_password: ci-password
+          EOF
+
+      - name: Compile factory firmware
+        run: |
+          esphome \
+            -s firmware_version "${{ steps.version.outputs.plain }}" \
+            compile "${YAML_FILE}"
+
+      - name: Collect firmware artifacts
+        id: collect
+        shell: bash
+        run: |
+          build_dir=".esphome/build/${DEVICE_NAME}/.pioenvs/${DEVICE_NAME}"
+          mkdir -p dist
+          cp "${build_dir}/firmware.factory.bin" dist/firmware.factory.bin
+          cp "${build_dir}/firmware.ota.bin" dist/firmware.ota.bin
+          cp static/index.html dist/index.html
+          ota_md5="$(md5sum dist/firmware.ota.bin | cut -d' ' -f1)"
+          echo "ota_md5=${ota_md5}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate manifests
+        shell: python
+        run: |
+          import json
+          import os
+          from pathlib import Path
+
+          version = os.environ["RELEASE_VERSION"]
+          ota_md5 = os.environ["OTA_MD5"]
+          release_url = f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/releases/tag/{version}"
+
+          def manifest(name):
+              return {
+                  "name": name,
+                  "version": version.lstrip("v"),
+                  "home_assistant_domain": "esphome",
+                  "new_install_prompt_erase": True,
+                  "builds": [
+                      {
+                          "chipFamily": "ESP32-P4",
+                          "parts": [
+                              {
+                                  "path": "firmware.factory.bin",
+                                  "offset": 0,
+                              }
+                          ],
+                          "ota": {
+                              "path": "firmware.ota.bin",
+                              "md5": ota_md5,
+                              "summary": f"{name} firmware {version}",
+                              "release_url": release_url,
+                          },
+                      }
+                  ],
+              }
+
+          Path("dist/manifest.json").write_text(
+              json.dumps(manifest("Atmosfera Echo Hub"), indent=2) + "\n",
+              encoding="utf-8",
+          )
+          Path("dist/manifest-beta.json").write_text(
+              json.dumps(manifest("Atmosfera Echo Hub Beta"), indent=2) + "\n",
+              encoding="utf-8",
+          )
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          OTA_MD5: ${{ steps.collect.outputs.ota_md5 }}
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: atmosfera-echo-hub-firmware
+          path: dist
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release view "${VERSION}" >/dev/null 2>&1 || \
+            gh release create "${VERSION}" --target "${GITHUB_SHA}" --title "Atmosfera Echo Hub ${VERSION}" --notes "Atmosfera Echo Hub firmware ${VERSION}."
+          gh release upload "${VERSION}" dist/* --clobber
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy GitHub Pages
+        uses: actions/deploy-pages@v4

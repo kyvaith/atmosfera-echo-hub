@@ -1,0 +1,15 @@
+# OTA update and ESPHome dashboard import metadata.
+# The release workflow publishes manifest.json with a real OTA MD5 and matching firmware assets.
+
+dashboard_import:
+  package_import_url: ${dashboard_import_url}
+
+ota:
+  - platform: http_request
+    id: ota_http_request
+
+update:
+  - platform: http_request
+    id: firmware_update
+    name: Firmware
+    source: ${firmware_manifest_url}

@@ -1,0 +1,55 @@
+# Boot splash shown while the UI finishes warming up.
+# The backlight is enabled only after this page is ready, so users see a polished fade-in.
+lvgl:
+  pages:
+    - id: boot_page
+      bg_color: 0x05070C
+      widgets:
+        - obj:
+            id: boot_root
+            width: 800
+            height: 800
+            align: CENTER
+            bg_color: 0x05070C
+            border_width: 0
+            radius: 400
+            pad_all: 0
+            scrollable: false
+            widgets:
+              - obj:
+                  width: 760
+                  height: 760
+                  align: CENTER
+                  bg_color: 0x10131B
+                  border_width: 1
+                  border_color: 0x2A3344
+                  radius: 380
+                  pad_all: 0
+                  scrollable: false
+              - obj:
+                  id: boot_logo_shell
+                  width: 260
+                  height: 260
+                  align: CENTER
+                  bg_opa: TRANSP
+                  border_width: 0
+                  radius: 130
+                  pad_all: 0
+                  scrollable: false
+                  widgets:
+                    - lottie:
+                        id: boot_esphome_logo
+                        file: "assets/animations/ESPHome.json"
+                        width: 220
+                        height: 220
+                        align: CENTER
+                        loop: true
+                        auto_start: false
+              - label:
+                  text: "Atmosfera Echo Hub"
+                  align: CENTER
+                  y: 184
+                  width: 480
+                  text_align: CENTER
+                  text_color: 0xF4EFFA
+                  text_font: roboto_24

@@ -1,5 +1,5 @@
 {
-  "name": "Atmosfera Echo Hub",
+  "name": "Atmosfera Echo Hub Beta",
   "version": "dev",
   "home_assistant_domain": "esphome",
   "new_install_prompt_erase": true,
