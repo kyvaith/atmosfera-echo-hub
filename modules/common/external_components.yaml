@@ -2,6 +2,10 @@
 # mipi_dsi and LVGL come from project forks; artwork_image comes from the media player project.
 external_components:
   - source:
+      type: local
+      path: components
+    components: [xmos]
+  - source:
       type: git
       url: https://github.com/kyvaith/esphome
       ref: dev

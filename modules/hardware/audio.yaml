@@ -16,6 +16,10 @@ i2s_audio:
     i2s_mclk_pin: GPIO13
     i2s_lrclk_pin: GPIO10
     i2s_bclk_pin: GPIO12
+  - id: xmos_i2s_bus
+    i2s_mclk_pin: ${xmos_i2s_mclk_pin}
+    i2s_lrclk_pin: ${xmos_i2s_lrclk_pin}
+    i2s_bclk_pin: ${xmos_i2s_bclk_pin}
 
 audio_dac:
   - platform: es8311
@@ -35,9 +39,28 @@ speaker:
     bits_per_sample: 16bit
     sample_rate: 48000
 
+  - platform: mixer
+    id: audio_mixer
+    output_speaker: board_speaker
+    num_channels: 2
+    queue_mode: true
+    source_speakers:
+      - id: media_mixing_input
+        buffer_duration: 100ms
+        timeout: never
+      - id: assistant_mixing_input
+        buffer_duration: 100ms
+        timeout: never
+
   - platform: resampler
     id: media_speaker
-    output_speaker: board_speaker
+    output_speaker: media_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
+
+  - platform: resampler
+    id: assistant_speaker
+    output_speaker: assistant_mixing_input
     sample_rate: 48000
     bits_per_sample: 16
 

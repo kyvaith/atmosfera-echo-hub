@@ -1,0 +1,129 @@
+# Voice Assistant overlay.
+# It lives on LVGL top_layer so it can appear above tiles, player and settings without changing pages.
+lvgl:
+  top_layer:
+    widgets:
+      - obj:
+          id: voice_assistant_overlay
+          x: 0
+          y: 0
+          width: 800
+          height: 800
+          bg_color: 0x05070C
+          bg_opa: 92%
+          border_width: 0
+          radius: 400
+          pad_all: 0
+          scrollable: false
+          clickable: true
+          hidden: true
+          widgets:
+            - obj:
+                width: 720
+                height: 720
+                align: CENTER
+                bg_color: 0x10131B
+                bg_opa: 94%
+                border_width: 1
+                border_color: 0x2A3344
+                radius: 360
+                pad_all: 0
+                scrollable: false
+            - button:
+                id: voice_assistant_close_button
+                align: TOP_RIGHT
+                x: -78
+                y: 58
+                width: 66
+                height: 66
+                radius: 33
+                bg_color: 0x1B1F2A
+                border_width: 1
+                border_color: 0x343B4C
+                scrollable: false
+                widgets:
+                  - label:
+                      text: "\uE5CD"
+                      align: CENTER
+                      text_color: 0xF4EFFA
+                      text_font: material_symbols_24
+                on_click:
+                  then:
+                    - voice_assistant.stop:
+                    - switch.turn_off: timer_ringing
+                    - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+                    - script.execute: voice_assistant_update_overlay
+            - obj:
+                id: voice_assistant_orb_shell
+                width: 270
+                height: 270
+                align: CENTER
+                y: -145
+                bg_color: 0x162725
+                bg_opa: 80%
+                border_width: 3
+                border_color: 0x8CEED1
+                radius: 135
+                pad_all: 0
+                scrollable: false
+                shadow_width: 32
+                shadow_color: 0x8CEED1
+                shadow_opa: 35%
+                widgets:
+                  - lottie:
+                      id: voice_assistant_lottie
+                      file: "assets/animations/voice_assistant.json"
+                      width: 238
+                      height: 238
+                      align: CENTER
+                      loop: true
+                      auto_start: false
+            - label:
+                id: voice_assistant_status_label
+                text: "Assistant"
+                align: CENTER
+                y: 14
+                width: 560
+                text_align: CENTER
+                text_color: 0x8CEED1
+                text_font: roboto_34
+            - label:
+                text: "You"
+                align: CENTER
+                x: -220
+                y: 108
+                width: 120
+                text_align: LEFT
+                text_color: 0xAEB4C2
+                text_font: roboto_16
+            - label:
+                id: voice_assistant_you_label
+                text: ""
+                align: CENTER
+                y: 140
+                width: 560
+                height: 74
+                text_align: CENTER
+                text_color: 0xF4EFFA
+                text_font: roboto_20
+                long_mode: WRAP
+            - label:
+                text: "Assistant"
+                align: CENTER
+                x: -196
+                y: 242
+                width: 160
+                text_align: LEFT
+                text_color: 0xAEB4C2
+                text_font: roboto_16
+            - label:
+                id: voice_assistant_response_label
+                text: ""
+                align: CENTER
+                y: 276
+                width: 580
+                height: 118
+                text_align: CENTER
+                text_color: 0xFFFFFF
+                text_font: roboto_24
+                long_mode: WRAP

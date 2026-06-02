@@ -51,8 +51,15 @@ substitutions:
   track_info_duration_default: "5"
   voice_language_default: en-US
   voice_region_default: auto
-  wake_word_default: hey_atmosfera
+  wake_word_default: hey_home_free
   voice_assistant_default: home_assistant
+
+  # Dedicated XMOS microphone bus. Keep it separate from the ES8311/SendSpin bus
+  # so wake word detection can run while local audio is playing.
+  xmos_i2s_mclk_pin: GPIO22
+  xmos_i2s_bclk_pin: GPIO21
+  xmos_i2s_lrclk_pin: GPIO20
+  xmos_i2s_din_pin: GPIO23
 
 packages:
   external_components: !include modules/common/external_components.yaml
@@ -73,8 +80,10 @@ packages:
   lvgl_tiles_page: !include modules/lvgl/pages/tiles.yaml
   lvgl_settings_page: !include modules/lvgl/pages/settings.yaml
   lvgl_player_page: !include modules/lvgl/pages/player.yaml
+  lvgl_voice_assistant_overlay: !include modules/lvgl/pages/voice_assistant.yaml
 
   player_settings: !include modules/player/settings.yaml
   player_artwork: !include modules/player/artwork.yaml
   player_runtime: !include modules/player/runtime.yaml
   player_speaker_grouping: !include modules/player/speaker_grouping.yaml
+  voice_assistant_runtime: !include modules/voice_assistant/runtime.yaml

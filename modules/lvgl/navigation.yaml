@@ -216,6 +216,8 @@ script:
           set_toggle(id(settings_perf_logs_button), id(settings_perf_logs_value), id(settings_perf_logs_switch).state);
           set_toggle(id(settings_swipe_logs_button), id(settings_swipe_logs_value), id(settings_swipe_logs_switch).state);
           set_toggle(id(settings_beta_firmware_button), id(settings_beta_firmware_value), id(settings_beta_firmware_switch).state);
+          set_toggle(id(settings_voice_mute_button), id(settings_voice_mute_value), id(voice_assistant_mute_switch).state);
+          set_toggle(id(settings_wake_sound_button), id(settings_wake_sound_value), id(voice_assistant_wake_sound_switch).state);
 
           if (id(settings_display_brightness_button) != nullptr) {
             lv_obj_set_style_bg_color(id(settings_display_brightness_button), lv_color_hex(0x2B303B), 0);
@@ -240,6 +242,18 @@ script:
               snprintf(timeout_buf, sizeof(timeout_buf), "%ds", timeout_s);
             }
             lv_label_set_text(id(settings_display_timeout_value), timeout_buf);
+          }
+
+          if (id(settings_wake_sensitivity_value) != nullptr) {
+            std::string sensitivity = id(mww_sensitivity_select).current_option().str();
+            if (sensitivity == "Slightly sensitive") {
+              sensitivity = "Slightly";
+            } else if (sensitivity == "Moderately sensitive") {
+              sensitivity = "Moderate";
+            } else if (sensitivity == "Very sensitive") {
+              sensitivity = "Very";
+            }
+            lv_label_set_text(id(settings_wake_sensitivity_value), sensitivity.c_str());
           }
 
           set_screen_tone(id(screen_tone_overlay_controls), id(settings_screen_tone_switch).state);

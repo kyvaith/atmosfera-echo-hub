@@ -5,3 +5,6 @@
 /dist/
 /secrets.yaml
 /venv/
+/.tmp/
+__pycache__/
+*.pyc

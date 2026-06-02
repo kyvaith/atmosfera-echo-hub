@@ -1,0 +1,406 @@
+# Local wake word and Home Assistant voice pipeline.
+# The microphone path captures the XMOS 48 kHz / 32-bit I2S stream,
+# convert locally to 16 kHz / 16-bit PCM, then feed microWakeWord and Voice Assistant.
+substitutions:
+  voice_assist_idle_phase_id: "1"
+  voice_assist_waiting_phase_id: "2"
+  voice_assist_listening_phase_id: "3"
+  voice_assist_thinking_phase_id: "4"
+  voice_assist_replying_phase_id: "5"
+  voice_assist_timer_finished_phase_id: "6"
+  voice_assist_not_ready_phase_id: "10"
+  voice_assist_error_phase_id: "11"
+
+globals:
+  - id: init_in_progress
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+  - id: voice_assistant_phase
+    type: int
+    restore_value: no
+    initial_value: ${voice_assist_not_ready_phase_id}
+  - id: first_active_timer
+    type: voice_assistant::Timer
+    restore_value: false
+  - id: is_timer_active
+    type: bool
+    restore_value: false
+
+microphone:
+  - platform: xmos
+    id: xmos_mics
+    adc_type: external
+    i2s_audio_id: xmos_i2s_bus
+    i2s_din_pin: ${xmos_i2s_din_pin}
+    i2s_mode: secondary
+    sample_rate: 48000
+    bits_per_sample: 32bit
+    channel: stereo
+    pdm: false
+    correct_dc_offset: false
+
+switch:
+  - platform: template
+    id: voice_assistant_mute_switch
+    name: "Voice Assistant Mute"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+    icon: "mdi:microphone-off"
+    on_turn_on:
+      - voice_assistant.stop:
+      - micro_wake_word.stop:
+      - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+      - script.execute: voice_assistant_update_overlay
+      - script.execute: ui_apply_settings_state
+    on_turn_off:
+      - if:
+          condition:
+            voice_assistant.connected:
+          then:
+            - micro_wake_word.start:
+            - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+            - script.execute: voice_assistant_update_overlay
+      - script.execute: ui_apply_settings_state
+
+  - platform: template
+    id: voice_assistant_wake_sound_switch
+    name: "Voice Assistant Wake Sound"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+    icon: "mdi:music-note"
+    on_turn_on:
+      - script.execute: ui_apply_settings_state
+    on_turn_off:
+      - script.execute: ui_apply_settings_state
+
+  - platform: template
+    id: timer_ringing
+    internal: true
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - micro_wake_word.enable_model: stop
+      - lambda: id(voice_assistant_phase) = ${voice_assist_timer_finished_phase_id};
+      - text_sensor.template.publish:
+          id: voice_assistant_response_text
+          state: "Timer finished"
+      - script.execute: voice_assistant_update_overlay
+      - delay: 15min
+      - switch.turn_off: timer_ringing
+    on_turn_off:
+      - micro_wake_word.disable_model: stop
+      - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+      - script.execute: voice_assistant_update_overlay
+
+select:
+  - platform: template
+    id: mww_sensitivity_select
+    name: "Wake Word Sensitivity"
+    optimistic: true
+    initial_option: Slightly sensitive
+    restore_value: true
+    entity_category: config
+    icon: "mdi:waveform"
+    options:
+      - Slightly sensitive
+      - Moderately sensitive
+      - Very sensitive
+    on_value:
+      lambda: |-
+        if (x == "Slightly sensitive") {
+          id(ok_home).set_probability_cutoff(217);
+          id(hey_home_free).set_probability_cutoff(247);
+        } else if (x == "Moderately sensitive") {
+          id(ok_home).set_probability_cutoff(176);
+          id(hey_home_free).set_probability_cutoff(235);
+        } else if (x == "Very sensitive") {
+          id(ok_home).set_probability_cutoff(143);
+          id(hey_home_free).set_probability_cutoff(212);
+        }
+        id(ui_apply_settings_state).execute();
+
+text_sensor:
+  - platform: template
+    id: voice_assistant_request_text
+    internal: true
+    on_value:
+      - script.execute: voice_assistant_update_overlay
+  - platform: template
+    id: voice_assistant_response_text
+    internal: true
+    on_value:
+      - script.execute: voice_assistant_update_overlay
+
+micro_wake_word:
+  id: mww
+  microphone:
+    microphone: xmos_mics
+    channels: 1
+  stop_after_detection: false
+  vad:
+  models:
+    - id: hey_home_free
+      model:
+        type: local
+        path: assets/microwakewords/hey_home_free.json
+    - id: ok_home
+      model:
+        type: local
+        path: assets/microwakewords/ok_home.json
+    - id: stop
+      internal: true
+      model:
+        type: http
+        url: https://fph-firmware-assets.s3.us-east-1.amazonaws.com/wake-word/stop.json
+  on_wake_word_detected:
+    then:
+      - if:
+          condition:
+            switch.is_on: voice_assistant_mute_switch
+          then:
+            - logger.log:
+                level: INFO
+                tag: voice
+                format: "Wake word ignored because Voice Assistant is muted"
+          else:
+            - if:
+                condition:
+                  switch.is_on: timer_ringing
+                then:
+                  - switch.turn_off: timer_ringing
+                else:
+                  - if:
+                      condition:
+                        voice_assistant.is_running:
+                      then:
+                        - voice_assistant.stop:
+                      else:
+                        - lambda: |-
+                            id(voice_assistant_phase) = ${voice_assist_waiting_phase_id};
+                            id(voice_assistant_request_text).publish_state("");
+                            id(voice_assistant_response_text).publish_state("");
+                        - script.execute: voice_assistant_update_overlay
+                        - voice_assistant.start:
+                            wake_word: !lambda return wake_word;
+
+voice_assistant:
+  id: va
+  microphone:
+    microphone: xmos_mics
+    channels: 0
+  speaker: assistant_speaker
+  micro_wake_word: mww
+  use_wake_word: false
+  noise_suppression_level: 0
+  auto_gain: 0dBFS
+  volume_multiplier: 1.0
+  conversation_timeout: 300s
+  on_client_connected:
+    - lambda: |-
+        id(init_in_progress) = false;
+        id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+    - if:
+        condition:
+          switch.is_off: voice_assistant_mute_switch
+        then:
+          - micro_wake_word.start:
+    - script.execute: voice_assistant_update_overlay
+  on_client_disconnected:
+    - voice_assistant.stop:
+    - micro_wake_word.stop:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
+    - script.execute: voice_assistant_update_overlay
+  on_error:
+    - if:
+        condition:
+          not:
+            lambda: |-
+              return code == "duplicate_wake_up_detected" || code == "stt-no-text-recognized";
+        then:
+          - lambda: |-
+              id(voice_assistant_phase) = ${voice_assist_error_phase_id};
+              id(voice_assistant_response_text).publish_state(message);
+          - script.execute: voice_assistant_update_overlay
+    - mixer_speaker.apply_ducking:
+        id: media_mixing_input
+        decibel_reduction: 0
+        duration: 500ms
+  on_start:
+    - mixer_speaker.apply_ducking:
+        id: media_mixing_input
+        decibel_reduction: 20
+        duration: 150ms
+    - script.execute: display_wake
+    - script.execute: voice_assistant_update_overlay
+  on_listening:
+    - lambda: |-
+        id(voice_assistant_phase) = ${voice_assist_waiting_phase_id};
+        id(voice_assistant_request_text).publish_state("...");
+        id(voice_assistant_response_text).publish_state("");
+    - script.execute: voice_assistant_update_overlay
+  on_stt_vad_start:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+    - script.execute: voice_assistant_update_overlay
+  on_stt_vad_end:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_thinking_phase_id};
+    - script.execute: voice_assistant_update_overlay
+  on_stt_end:
+    - text_sensor.template.publish:
+        id: voice_assistant_request_text
+        state: !lambda return x;
+  on_intent_progress:
+    - if:
+        condition:
+          lambda: return !x.empty();
+        then:
+          - lambda: id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
+          - script.execute: activate_stop_word_once
+          - script.execute: voice_assistant_update_overlay
+  on_tts_start:
+    - lambda: |-
+        id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
+        id(voice_assistant_response_text).publish_state(x);
+    - script.execute: activate_stop_word_once
+    - script.execute: voice_assistant_update_overlay
+  on_tts_end:
+    - script.execute: voice_assistant_update_overlay
+  on_end:
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - mixer_speaker.apply_ducking:
+        id: media_mixing_input
+        decibel_reduction: 0
+        duration: 800ms
+    - delay: 250ms
+    - if:
+        condition:
+          switch.is_off: timer_ringing
+        then:
+          - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+          - script.execute: voice_assistant_update_overlay
+  on_timer_started:
+    - script.execute: check_if_timers_active
+  on_timer_updated:
+    - script.execute: fetch_first_active_timer
+  on_timer_cancelled:
+    - script.execute: check_if_timers_active
+  on_timer_finished:
+    - switch.turn_on: timer_ringing
+
+script:
+  - id: activate_stop_word_once
+    mode: restart
+    then:
+      - delay: 1s
+      - if:
+          condition:
+            switch.is_off: timer_ringing
+          then:
+            - micro_wake_word.enable_model: stop
+            - wait_until:
+                condition:
+                  speaker.is_stopped: assistant_speaker
+                timeout: 20s
+            - if:
+                condition:
+                  switch.is_off: timer_ringing
+                then:
+                  - micro_wake_word.disable_model: stop
+
+  - id: fetch_first_active_timer
+    then:
+      - lambda: |-
+          const auto timers = id(va).get_timers();
+          if (timers.empty()) {
+            id(is_timer_active) = false;
+            return;
+          }
+          auto output_timer = *timers.begin();
+          for (const auto &timer : timers) {
+            if (timer.is_active && timer.seconds_left <= output_timer.seconds_left) {
+              output_timer = timer;
+            }
+          }
+          id(first_active_timer) = output_timer;
+          id(is_timer_active) = true;
+
+  - id: check_if_timers_active
+    then:
+      - lambda: |-
+          const auto timers = id(va).get_timers();
+          bool active = false;
+          for (const auto &timer : timers) {
+            if (timer.is_active) {
+              active = true;
+              break;
+            }
+          }
+          id(is_timer_active) = active;
+
+  - id: voice_assistant_update_overlay
+    mode: restart
+    then:
+      - lambda: |-
+          const int phase = id(voice_assistant_phase);
+          const bool visible = phase != ${voice_assist_idle_phase_id} && phase != ${voice_assist_not_ready_phase_id};
+
+          if (id(voice_assistant_overlay) != nullptr) {
+            if (visible) {
+              lv_obj_clear_flag(id(voice_assistant_overlay), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_move_foreground(id(voice_assistant_overlay));
+            } else {
+              lv_obj_add_flag(id(voice_assistant_overlay), LV_OBJ_FLAG_HIDDEN);
+            }
+          }
+
+          const char *status = "Assistant";
+          uint32_t accent = 0x8CEED1;
+          if (phase == ${voice_assist_waiting_phase_id}) {
+            status = "Listening";
+            accent = 0xA8F4DF;
+          } else if (phase == ${voice_assist_listening_phase_id}) {
+            status = "Listening";
+            accent = 0xC7F5FF;
+          } else if (phase == ${voice_assist_thinking_phase_id}) {
+            status = "Thinking";
+            accent = 0xEADDFF;
+          } else if (phase == ${voice_assist_replying_phase_id}) {
+            status = "Speaking";
+            accent = 0xFFDDB8;
+          } else if (phase == ${voice_assist_timer_finished_phase_id}) {
+            status = "Timer";
+            accent = 0xFFD7E4;
+          } else if (phase == ${voice_assist_error_phase_id}) {
+            status = "Error";
+            accent = 0xFFB4AB;
+          }
+
+          if (id(voice_assistant_status_label) != nullptr) {
+            lv_label_set_text(id(voice_assistant_status_label), status);
+            lv_obj_set_style_text_color(id(voice_assistant_status_label), lv_color_hex(accent), 0);
+          }
+          if (id(voice_assistant_orb_shell) != nullptr) {
+            lv_obj_set_style_border_color(id(voice_assistant_orb_shell), lv_color_hex(accent), 0);
+            lv_obj_set_style_shadow_color(id(voice_assistant_orb_shell), lv_color_hex(accent), 0);
+          }
+          if (id(voice_assistant_you_label) != nullptr) {
+            const std::string request = id(voice_assistant_request_text).state;
+            lv_label_set_text(id(voice_assistant_you_label), request.empty() ? "" : request.c_str());
+          }
+          if (id(voice_assistant_response_label) != nullptr) {
+            const std::string response = id(voice_assistant_response_text).state;
+            lv_label_set_text(id(voice_assistant_response_label), response.empty() ? "" : response.c_str());
+          }
+      - if:
+          condition:
+            lambda: |-
+              return id(voice_assistant_phase) != ${voice_assist_idle_phase_id}
+                  && id(voice_assistant_phase) != ${voice_assist_not_ready_phase_id};
+          then:
+            - lvgl.lottie.start: voice_assistant_lottie
+          else:
+            - lvgl.lottie.stop: voice_assistant_lottie

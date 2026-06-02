@@ -340,6 +340,100 @@ lvgl:
                             if (value < 300.0f) return 300.0f;
                             return 0.0f;
                       - script.execute: ui_apply_settings_state
+              - button:
+                  id: settings_voice_mute_button
+                  x: 104
+                  y: 940
+                  width: 592
+                  height: 76
+                  radius: 38
+                  bg_color: 0x1B1F2A
+                  border_width: 1
+                  border_color: 0x343B4C
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Voice Assistant Mute"
+                        x: 28
+                        y: 24
+                        text_color: 0xFFFFFF
+                        text_font: roboto_20
+                    - label:
+                        id: settings_voice_mute_value
+                        text: "OFF"
+                        align: RIGHT_MID
+                        x: -30
+                        text_color: 0xAEB4C2
+                        text_font: roboto_24
+                  on_click:
+                    then:
+                      - switch.toggle: voice_assistant_mute_switch
+                      - script.execute: ui_apply_settings_state
+              - button:
+                  id: settings_wake_sound_button
+                  x: 104
+                  y: 1030
+                  width: 592
+                  height: 76
+                  radius: 38
+                  bg_color: 0x1B1F2A
+                  border_width: 1
+                  border_color: 0x343B4C
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Wake Sound"
+                        x: 28
+                        y: 24
+                        text_color: 0xFFFFFF
+                        text_font: roboto_20
+                    - label:
+                        id: settings_wake_sound_value
+                        text: "OFF"
+                        align: RIGHT_MID
+                        x: -30
+                        text_color: 0xAEB4C2
+                        text_font: roboto_24
+                  on_click:
+                    then:
+                      - switch.toggle: voice_assistant_wake_sound_switch
+                      - script.execute: ui_apply_settings_state
+              - button:
+                  id: settings_wake_sensitivity_button
+                  x: 104
+                  y: 1120
+                  width: 592
+                  height: 86
+                  radius: 43
+                  bg_color: 0x2B303B
+                  border_width: 1
+                  border_color: 0x735E9A
+                  scrollable: false
+                  gesture_bubble: true
+                  widgets:
+                    - label:
+                        text: "Wake Sensitivity"
+                        x: 28
+                        y: 18
+                        text_color: 0xFFFFFF
+                        text_font: roboto_20
+                    - label:
+                        id: settings_wake_sensitivity_value
+                        text: "Slightly"
+                        align: RIGHT_MID
+                        x: -30
+                        width: 260
+                        text_align: RIGHT
+                        text_color: 0xEADDFF
+                        text_font: roboto_20
+                  on_click:
+                    then:
+                      - select.next:
+                          id: mww_sensitivity_select
+                          cycle: true
+                      - script.execute: ui_apply_settings_state
               - label:
                   text: ""
                   align: BOTTOM_MID

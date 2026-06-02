@@ -925,33 +925,43 @@ lvgl:
                     then:
                       - script.execute: ui_show_settings
               - button:
-                  id: tile_music_page_button
+                  id: tile_voice_button
                   x: 414
                   y: 490
                   width: 300
                   height: 150
                   radius: 68
-                  bg_color: 0x3A2A54
+                  bg_color: 0x173B34
                   border_width: 1
-                  border_color: 0x735E9A
+                  border_color: 0x8CEED1
                   scrollable: false
                   gesture_bubble: true
                   widgets:
                     - label:
-                        text: "Player"
+                        text: "Assistant"
                         align: TOP_MID
                         y: 32
                         text_color: 0xFFFFFF
                         text_font: roboto_24
                     - label:
-                        text: "Music"
+                        text: "Talk"
                         align: BOTTOM_MID
                         y: -32
-                        text_color: 0xEADDFF
+                        text_color: 0xA8F4DF
                         text_font: roboto_18
                   on_click:
                     then:
-                      - script.execute: ui_show_player
+                      - if:
+                          condition:
+                            switch.is_off: voice_assistant_mute_switch
+                          then:
+                            - lambda: |-
+                                id(voice_assistant_phase) = ${voice_assist_waiting_phase_id};
+                                id(voice_assistant_request_text).publish_state("");
+                                id(voice_assistant_response_text).publish_state("");
+                            - script.execute: display_wake
+                            - script.execute: voice_assistant_update_overlay
+                            - voice_assistant.start:
               - label:
                   text: ""
                   align: BOTTOM_MID
