@@ -184,6 +184,7 @@ script:
           if (id(perf_overlay_label) != nullptr) {
             if (id(settings_perf_overlay_switch).state) {
               lv_obj_clear_flag(id(perf_overlay_label), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_move_foreground(id(perf_overlay_label));
             } else {
               lv_obj_add_flag(id(perf_overlay_label), LV_OBJ_FLAG_HIDDEN);
             }
@@ -209,8 +210,13 @@ script:
             }
           };
 
-          set_toggle(id(settings_true_colour_button), id(settings_true_colour_value), id(settings_true_colour_switch).state);
-          set_toggle(id(settings_screen_tone_button), id(settings_screen_tone_value), id(settings_screen_tone_switch).state);
+          set_toggle(id(settings_true_colour_button), id(settings_true_colour_value), true);
+          if (id(settings_true_colour_value) != nullptr) {
+            lv_label_set_text(id(settings_true_colour_value), "RGB888");
+          }
+          const bool screen_tone_render_enabled = false;  // Screen Tone currently requires an alpha overlay.
+          set_toggle(id(settings_screen_tone_button), id(settings_screen_tone_value),
+                     screen_tone_render_enabled && id(settings_screen_tone_switch).state);
           set_toggle(id(settings_perf_overlay_button), id(settings_perf_overlay_value), id(settings_perf_overlay_switch).state);
           set_toggle(id(settings_system_logs_button), id(settings_system_logs_value), id(settings_system_logs_switch).state);
           set_toggle(id(settings_perf_logs_button), id(settings_perf_logs_value), id(settings_perf_logs_switch).state);
@@ -256,11 +262,10 @@ script:
             lv_label_set_text(id(settings_wake_sensitivity_value), sensitivity.c_str());
           }
 
-          set_screen_tone(id(screen_tone_overlay_controls), id(settings_screen_tone_switch).state);
-          set_screen_tone(id(screen_tone_overlay_settings), id(settings_screen_tone_switch).state);
-          set_screen_tone(id(screen_tone_overlay_music), id(settings_screen_tone_switch).state);
+          set_screen_tone(id(screen_tone_overlay_controls), false);
+          set_screen_tone(id(screen_tone_overlay_settings), false);
+          set_screen_tone(id(screen_tone_overlay_music), false);
 
           if (id(settings_true_colour_note) != nullptr) {
-            lv_label_set_text(id(settings_true_colour_note),
-                              id(settings_true_colour_switch).state ? "RGB888 Active" : "RGB565 needs 16-bit build");
+            lv_label_set_text(id(settings_true_colour_note), "LVGL RGB888 / DSI 24-bit");
           }

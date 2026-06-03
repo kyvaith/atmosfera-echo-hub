@@ -10,9 +10,9 @@ lvgl:
           width: 800
           height: 800
           bg_color: 0x05070C
-          bg_opa: 92%
+          bg_opa: 100%
           border_width: 0
-          radius: 400
+          radius: 0
           pad_all: 0
           scrollable: false
           clickable: true
@@ -23,10 +23,10 @@ lvgl:
                 height: 720
                 align: CENTER
                 bg_color: 0x10131B
-                bg_opa: 94%
+                bg_opa: 100%
                 border_width: 1
                 border_color: 0x2A3344
-                radius: 360
+                radius: 0
                 pad_all: 0
                 scrollable: false
             - button:
@@ -60,15 +60,15 @@ lvgl:
                 align: CENTER
                 y: -145
                 bg_color: 0x162725
-                bg_opa: 80%
+                bg_opa: 100%
                 border_width: 3
                 border_color: 0x8CEED1
                 radius: 135
                 pad_all: 0
                 scrollable: false
-                shadow_width: 32
+                shadow_width: 0
                 shadow_color: 0x8CEED1
-                shadow_opa: 35%
+                shadow_opa: 0%
                 widgets:
                   - lottie:
                       id: voice_assistant_lottie
@@ -77,7 +77,8 @@ lvgl:
                       height: 238
                       align: CENTER
                       loop: true
-                      auto_start: false
+                      auto_start: true
+                      hidden: true
             - label:
                 id: voice_assistant_status_label
                 text: "Assistant"
@@ -127,3 +128,17 @@ lvgl:
                 text_color: 0xFFFFFF
                 text_font: roboto_24
                 long_mode: WRAP
+      - label:
+          id: perf_overlay_label
+          text: "FPS --  CPU --%"
+          align: BOTTOM_MID
+          y: -24
+          width: 520
+          text_align: CENTER
+          text_color: 0xF4EFFA
+          bg_color: 0x10131B
+          bg_opa: 100%
+          radius: 20
+          pad_left: 10
+          pad_right: 10
+          text_font: roboto_16

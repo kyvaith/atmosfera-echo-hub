@@ -39,6 +39,10 @@ substitutions:
   display_buffer_size: 100%
   display_byte_order: little_endian
   display_pclk_frequency: 60MHz
+  lvgl_use_ppa: "true"
+  lvgl_use_ppa_img: "true"
+  lvgl_profiler_enabled: "false"
+  lvgl_profiler_auto_run: "false"
   touch_update_interval: 16ms
   backlight_pwm_frequency: 20000Hz
 
@@ -53,6 +57,8 @@ substitutions:
   voice_region_default: auto
   wake_word_default: hey_home_free
   voice_assistant_default: home_assistant
+  # Keep the XMOS microphone disabled until the physical module is connected.
+  xmos_microphone_enabled: "false"
 
   # Dedicated XMOS microphone bus. Keep it separate from the ES8311/SendSpin bus
   # so wake word detection can run while local audio is playing.
@@ -66,7 +72,9 @@ packages:
   core: !include modules/common/core.yaml
   managed_updates: !include modules/common/managed_updates.yaml
   system_settings: !include modules/common/system_settings.yaml
+  memory_diagnostics: !include modules/diagnostics/memory.yaml
   performance_diagnostics: !include modules/diagnostics/performance.yaml
+  lvgl_profiler_diagnostics: !include modules/diagnostics/lvgl_profiler.yaml
 
   esp32_p4_hardware: !include modules/hardware/esp32_p4.yaml
   display_hardware: !include modules/hardware/display.yaml

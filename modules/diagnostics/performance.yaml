@@ -12,9 +12,17 @@ interval:
               return std::string("");
             }
             lv_obj_clear_flag(id(perf_overlay_label), LV_OBJ_FLAG_HIDDEN);
-            char buf[72];
-            snprintf(buf, sizeof(buf), "FPS %lu CPU %lu%% FL %lu/%lums L%lums I%luk D%lu",
-                     (unsigned long) lvgl_esphome_get_fps(),
+            lv_obj_move_foreground(id(perf_overlay_label));
+            const uint32_t fps = lvgl_esphome_get_fps();
+            char fps_buf[8];
+            if (fps == 0) {
+              snprintf(fps_buf, sizeof(fps_buf), "--");
+            } else {
+              snprintf(fps_buf, sizeof(fps_buf), "%lu", (unsigned long) fps);
+            }
+            char buf[76];
+            snprintf(buf, sizeof(buf), "FPS %s CPU %lu%% FL %lu/%lums L%lums I%luk D%lu",
+                     fps_buf,
                      (unsigned long) lvgl_esphome_get_cpu_pct(),
                      (unsigned long) lvgl_esphome_get_flush_ms(),
                      (unsigned long) lvgl_esphome_get_flush_max_ms(),

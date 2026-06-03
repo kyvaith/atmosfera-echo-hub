@@ -30,6 +30,7 @@ globals:
 microphone:
   - platform: xmos
     id: xmos_mics
+    enabled: ${xmos_microphone_enabled}
     adc_type: external
     i2s_audio_id: xmos_i2s_bus
     i2s_din_pin: ${xmos_i2s_din_pin}
@@ -45,7 +46,7 @@ switch:
     id: voice_assistant_mute_switch
     name: "Voice Assistant Mute"
     optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: ALWAYS_ON
     entity_category: config
     icon: "mdi:microphone-off"
     on_turn_on:
@@ -57,11 +58,19 @@ switch:
     on_turn_off:
       - if:
           condition:
-            voice_assistant.connected:
+            and:
+              - lambda: return ${xmos_microphone_enabled};
+              - voice_assistant.connected:
           then:
             - micro_wake_word.start:
             - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
             - script.execute: voice_assistant_update_overlay
+          else:
+            - if:
+                condition:
+                  lambda: return !${xmos_microphone_enabled};
+                then:
+                  - switch.turn_on: voice_assistant_mute_switch
       - script.execute: ui_apply_settings_state
 
   - platform: template
@@ -82,7 +91,11 @@ switch:
     optimistic: true
     restore_mode: ALWAYS_OFF
     on_turn_on:
-      - micro_wake_word.enable_model: stop
+      - if:
+          condition:
+            lambda: return ${xmos_microphone_enabled};
+          then:
+            - micro_wake_word.enable_model: stop
       - lambda: id(voice_assistant_phase) = ${voice_assist_timer_finished_phase_id};
       - text_sensor.template.publish:
           id: voice_assistant_response_text
@@ -91,7 +104,11 @@ switch:
       - delay: 15min
       - switch.turn_off: timer_ringing
     on_turn_off:
-      - micro_wake_word.disable_model: stop
+      - if:
+          condition:
+            lambda: return ${xmos_microphone_enabled};
+          then:
+            - micro_wake_word.disable_model: stop
       - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
       - script.execute: voice_assistant_update_overlay
 
@@ -204,7 +221,9 @@ voice_assistant:
         id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
     - if:
         condition:
-          switch.is_off: voice_assistant_mute_switch
+          and:
+            - lambda: return ${xmos_microphone_enabled};
+            - switch.is_off: voice_assistant_mute_switch
         then:
           - micro_wake_word.start:
     - script.execute: voice_assistant_update_overlay
@@ -298,7 +317,9 @@ script:
       - delay: 1s
       - if:
           condition:
-            switch.is_off: timer_ringing
+            and:
+              - lambda: return ${xmos_microphone_enabled};
+              - switch.is_off: timer_ringing
           then:
             - micro_wake_word.enable_model: stop
             - wait_until:
@@ -307,7 +328,9 @@ script:
                 timeout: 20s
             - if:
                 condition:
-                  switch.is_off: timer_ringing
+                  and:
+                    - lambda: return ${xmos_microphone_enabled};
+                    - switch.is_off: timer_ringing
                 then:
                   - micro_wake_word.disable_model: stop
 
@@ -352,6 +375,9 @@ script:
             if (visible) {
               lv_obj_clear_flag(id(voice_assistant_overlay), LV_OBJ_FLAG_HIDDEN);
               lv_obj_move_foreground(id(voice_assistant_overlay));
+              if (id(perf_overlay_label) != nullptr && id(settings_perf_overlay_switch).state) {
+                lv_obj_move_foreground(id(perf_overlay_label));
+              }
             } else {
               lv_obj_add_flag(id(voice_assistant_overlay), LV_OBJ_FLAG_HIDDEN);
             }
@@ -395,12 +421,28 @@ script:
             const std::string response = id(voice_assistant_response_text).state;
             lv_label_set_text(id(voice_assistant_response_label), response.empty() ? "" : response.c_str());
           }
-      - if:
-          condition:
-            lambda: |-
-              return id(voice_assistant_phase) != ${voice_assist_idle_phase_id}
-                  && id(voice_assistant_phase) != ${voice_assist_not_ready_phase_id};
-          then:
-            - lvgl.lottie.start: voice_assistant_lottie
-          else:
-            - lvgl.lottie.stop: voice_assistant_lottie
+          if (id(voice_assistant_lottie) != nullptr) {
+            auto *ctx = static_cast<esphome::lvgl::LottieContext *>(lv_obj_get_user_data(id(voice_assistant_lottie)));
+            const bool was_hidden = lv_obj_has_flag(id(voice_assistant_lottie), LV_OBJ_FLAG_HIDDEN);
+            if (visible) {
+              if (ctx != nullptr) {
+                const bool was_runtime_hidden = ctx->runtime_hidden;
+                ctx->runtime_hidden = false;
+                if (ctx->pixel_buffer == nullptr) {
+                  esphome::lvgl::lottie_launch(ctx);
+                } else {
+                  lv_obj_clear_flag(id(voice_assistant_lottie), LV_OBJ_FLAG_HIDDEN);
+                  if (was_hidden || was_runtime_hidden) {
+                    esphome::lvgl::lottie_restart(ctx);
+                  }
+                }
+              } else {
+                lv_obj_clear_flag(id(voice_assistant_lottie), LV_OBJ_FLAG_HIDDEN);
+              }
+            } else {
+              lv_obj_add_flag(id(voice_assistant_lottie), LV_OBJ_FLAG_HIDDEN);
+              if (ctx != nullptr) {
+                ctx->runtime_hidden = true;
+              }
+            }
+          }

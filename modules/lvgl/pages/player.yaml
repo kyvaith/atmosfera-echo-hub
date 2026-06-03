@@ -18,7 +18,7 @@ lvgl:
             align: CENTER
             bg_color: 0x05070C
             border_width: 0
-            radius: 400
+            radius: 0
             pad_all: 0
             scrollable: false
             widgets:
@@ -29,7 +29,7 @@ lvgl:
                   align: CENTER
                   bg_color: 0x10131B
                   border_width: 0
-                  radius: 400
+                  radius: 0
                   pad_all: 0
                   scrollable: false
                   gesture_bubble: true
@@ -51,9 +51,9 @@ lvgl:
                   width: 800
                   height: 800
                   bg_color: 0x000000
-                  bg_opa: 68%
+                  bg_opa: 100%
                   border_width: 0
-                  radius: 400
+                  radius: 0
                   pad_all: 0
                   scrollable: false
                   clickable: false
@@ -122,7 +122,8 @@ lvgl:
                   height: 130
                   align: CENTER
                   y: -98
-                  bg_opa: TRANSP
+                  bg_color: 0x000000
+                  bg_opa: 100%
                   border_width: 0
                   radius: 65
                   pad_all: 0
@@ -178,7 +179,7 @@ lvgl:
                   width: 360
                   text_align: CENTER
                   text_color: 0xE4E0F0
-                  text_opa: 80%
+                  text_opa: 100%
                   text_font: roboto_18
 
               - bar:
@@ -191,7 +192,7 @@ lvgl:
                   max_value: 100
                   value: 0
                   bg_color: 0x000000
-                  bg_opa: 55%
+                  bg_opa: 100%
                   radius: 0
                   indicator:
                     bg_color: 0xFFFFFF
@@ -338,9 +339,9 @@ lvgl:
                   width: 800
                   height: 800
                   bg_color: 0x05070C
-                  bg_opa: 92%
+                  bg_opa: 100%
                   border_width: 0
-                  radius: 400
+                  radius: 0
                   pad_all: 0
                   scrollable: false
                   hidden: true
@@ -494,7 +495,7 @@ lvgl:
                   bg_color: 0x05070C
                   bg_opa: 100%
                   border_width: 0
-                  radius: 400
+                  radius: 0
                   pad_all: 0
                   scrollable: false
                   hidden: true
@@ -506,7 +507,7 @@ lvgl:
                         bg_color: 0x10131B
                         border_width: 1
                         border_color: 0x2A3344
-                        radius: 380
+                        radius: 0
                         pad_all: 0
                         scrollable: false
                     - label:
@@ -525,7 +526,7 @@ lvgl:
                         width: 180
                         text_align: CENTER
                         bg_color: 0x1B1F2A
-                        bg_opa: 80%
+                        bg_opa: 100%
                         radius: 16
                         pad_top: 4
                         pad_bottom: 4
@@ -615,7 +616,8 @@ lvgl:
                         y: 236
                         width: 644
                         height: 470
-                        bg_opa: TRANSP
+                        bg_color: 0x10131B
+                        bg_opa: 100%
                         border_width: 0
                         pad_all: 0
                         scrollable: true
@@ -1959,10 +1961,10 @@ lvgl:
             y: 0
             width: 800
             height: 800
-            bg_color: 0xFFD7A8
-            bg_opa: 14%
+            bg_color: 0x05070C
+            bg_opa: 100%
             border_width: 0
-            radius: 400
+            radius: 0
             pad_all: 0
             scrollable: false
             clickable: false

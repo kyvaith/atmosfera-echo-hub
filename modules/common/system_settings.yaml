@@ -20,9 +20,11 @@ script:
     then:
       - lambda: |-
           if (!id(boot_sequence_done) || !id(display_awake)) return;
-          float brightness = id(settings_display_brightness).state / 100.0f;
-          if (brightness < 0.01f) brightness = 0.01f;
-          if (brightness > 1.0f) brightness = 1.0f;
+          float brightness_state = id(settings_display_brightness).state;
+          if (!(brightness_state >= 5.0f && brightness_state <= 100.0f)) {
+            brightness_state = ${display_brightness_default};
+          }
+          float brightness = brightness_state / 100.0f;
           auto call = id(display_backlight).turn_on();
           call.set_brightness(brightness);
           call.set_transition_length(250);
@@ -35,9 +37,11 @@ script:
           id(display_last_interaction_ms) = millis();
           if (!id(boot_sequence_done)) return;
           id(display_awake) = true;
-          float brightness = id(settings_display_brightness).state / 100.0f;
-          if (brightness < 0.01f) brightness = 0.01f;
-          if (brightness > 1.0f) brightness = 1.0f;
+          float brightness_state = id(settings_display_brightness).state;
+          if (!(brightness_state >= 5.0f && brightness_state <= 100.0f)) {
+            brightness_state = ${display_brightness_default};
+          }
+          float brightness = brightness_state / 100.0f;
           auto call = id(display_backlight).turn_on();
           call.set_brightness(brightness);
           call.set_transition_length(250);
@@ -94,10 +98,11 @@ switch:
     id: settings_true_colour_switch
     name: "True Colour Mode"
     optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
+    restore_mode: ALWAYS_ON
     on_turn_on:
       - script.execute: ui_apply_settings_state
     on_turn_off:
+      - switch.turn_on: settings_true_colour_switch
       - script.execute: ui_apply_settings_state
   - platform: template
     id: settings_screen_tone_switch

@@ -26,6 +26,12 @@ enum MicrophoneEventGroupBits : uint32_t {
 void XMOSMicrophone::setup() {
   ESP_LOGCONFIG(TAG, "Setting up XMOS I2S microphone...");
 
+  if (!this->enabled_) {
+    ESP_LOGCONFIG(TAG, "XMOS microphone is disabled by configuration");
+    this->configure_voice_stream_settings_();
+    return;
+  }
+
   if (this->pdm_) {
     ESP_LOGE(TAG, "PDM is not supported for XMOS microphones");
     this->mark_failed();
@@ -53,10 +59,11 @@ void XMOSMicrophone::dump_config() {
   ESP_LOGCONFIG(TAG,
                 "XMOS Microphone:\n"
                 "  DIN Pin: %d\n"
+                "  Enabled: %s\n"
                 "  Capture: 48kHz / 32-bit I2S\n"
                 "  Output: 16kHz / 16-bit PCM\n"
                 "  DC offset correction: %s",
-                static_cast<int8_t>(this->din_pin_), YESNO(this->correct_dc_offset_));
+                static_cast<int8_t>(this->din_pin_), YESNO(this->enabled_), YESNO(this->correct_dc_offset_));
 }
 
 void XMOSMicrophone::configure_voice_stream_settings_() {
@@ -65,13 +72,13 @@ void XMOSMicrophone::configure_voice_stream_settings_() {
 }
 
 void XMOSMicrophone::start() {
-  if (this->is_failed())
+  if (!this->enabled_ || this->is_failed())
     return;
   xSemaphoreTake(this->active_listeners_semaphore_, 0);
 }
 
 void XMOSMicrophone::stop() {
-  if (this->state_ == microphone::STATE_STOPPED || this->is_failed())
+  if (!this->enabled_ || this->state_ == microphone::STATE_STOPPED || this->is_failed())
     return;
   xSemaphoreGive(this->active_listeners_semaphore_);
 }
@@ -247,6 +254,10 @@ void XMOSMicrophone::mic_task(void *params) {
 }
 
 void XMOSMicrophone::loop() {
+  if (!this->enabled_) {
+    return;
+  }
+
   uint32_t event_group_bits = xEventGroupGetBits(this->event_group_);
 
   if (event_group_bits & MicrophoneEventGroupBits::TASK_STARTING) {

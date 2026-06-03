@@ -28,6 +28,7 @@ DEPENDENCIES = ["i2s_audio"]
 
 CONF_ADC_TYPE = "adc_type"
 CONF_CORRECT_DC_OFFSET = "correct_dc_offset"
+CONF_ENABLED = "enabled"
 
 
 XMOSMicrophone = i2s_audio_ns.class_(
@@ -86,6 +87,7 @@ BASE_SCHEMA = microphone.MICROPHONE_SCHEMA.extend(
     ).extend(
         {
             cv.Optional(CONF_CORRECT_DC_OFFSET, default=False): cv.boolean,
+            cv.Optional(CONF_ENABLED, default=True): cv.boolean,
         }
     )
 ).extend(cv.COMPONENT_SCHEMA)
@@ -121,3 +123,4 @@ async def to_code(config):
     cg.add(var.set_din_pin(config[CONF_I2S_DIN_PIN]))
     cg.add(var.set_pdm(config[CONF_PDM]))
     cg.add(var.set_correct_dc_offset(config[CONF_CORRECT_DC_OFFSET]))
+    cg.add(var.set_enabled(config[CONF_ENABLED]))

@@ -1,0 +1,51 @@
+# Short, opt-in LVGL profiler run used for A/B firmware builds.
+# It opens Settings and performs the same scroll sequence every time, so PPA
+# and non-PPA RGB888 builds can be compared without relying on touch timing.
+esphome:
+  on_boot:
+    priority: -80
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return ${lvgl_profiler_auto_run};
+          then:
+            - delay: 7s
+            - script.execute: lvgl_profiler_profile_settings_scroll
+
+script:
+  - id: lvgl_profiler_profile_settings_scroll
+    mode: single
+    then:
+      - logger.set_level: INFO
+      - lambda: |-
+          ESP_LOGI("lvgl.prof", "PROFILE_BEGIN settings_scroll rgb888 ppa=%s ppa_img=%s",
+                   "${lvgl_use_ppa}", "${lvgl_use_ppa_img}");
+          lvgl_esphome_set_perf_logging_enabled(true);
+      - script.execute: ui_show_settings
+      - delay: 900ms
+      - lambda: |-
+          lvgl_esphome_set_profiler_enabled(true);
+          lvgl_esphome_profiler_mark("settings_scroll_start");
+      - repeat:
+          count: 5
+          then:
+            - lambda: |-
+                lvgl_esphome_profiler_mark("settings_scroll_step_down");
+                lv_obj_scroll_by(id(settings_root), 0, -80, LV_ANIM_OFF);
+            - delay: 90ms
+      - delay: 250ms
+      - repeat:
+          count: 5
+          then:
+            - lambda: |-
+                lvgl_esphome_profiler_mark("settings_scroll_step_up");
+                lv_obj_scroll_by(id(settings_root), 0, 80, LV_ANIM_OFF);
+            - delay: 90ms
+      - delay: 500ms
+      - lambda: |-
+          lvgl_esphome_profiler_mark("settings_scroll_end");
+          lvgl_esphome_profiler_flush();
+          ESP_LOGI("lvgl.prof", "PROFILE_END settings_scroll");
+      - delay: 1s
+      - logger.set_level: WARN

@@ -3,6 +3,10 @@
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
+  includes:
+    - <esp_heap_caps.h>
+    - <esp_psram.h>
+    - <sdkconfig.h>
   project:
     name: "${project_namespace}.${friendly_name}"
     version: ${firmware_version}
@@ -17,20 +21,27 @@ esphome:
       - lvgl.page.show:
           id: boot_page
       - script.execute: ui_apply_settings_state
+      - script.execute: log_memory_diagnostics
       - delay: 250ms
       - lambda: |-
           id(display_awake) = true;
           id(display_last_interaction_ms) = millis();
-          float brightness = id(settings_display_brightness).state / 100.0f;
-          if (brightness < 0.01f) brightness = 0.01f;
-          if (brightness > 1.0f) brightness = 1.0f;
+          float brightness_state = id(settings_display_brightness).state;
+          bool used_fallback = false;
+          if (!(brightness_state >= 5.0f && brightness_state <= 100.0f)) {
+            brightness_state = ${display_brightness_default};
+            used_fallback = true;
+          }
+          float brightness = brightness_state / 100.0f;
+          if (used_fallback) {
+            ESP_LOGW("display.boot", "Invalid restored brightness %.2f%%, using default %.2f%%",
+                     id(settings_display_brightness).state, brightness_state);
+          }
           auto call = id(display_backlight).turn_on();
           call.set_brightness(brightness);
           call.set_transition_length(2000);
           call.perform();
-      - lvgl.lottie.start: boot_esphome_logo
       - delay: 4s
-      - lvgl.lottie.stop: boot_esphome_logo
       - script.execute: ui_show_tiles_1
       - lvgl.page.show:
           id: controls_page

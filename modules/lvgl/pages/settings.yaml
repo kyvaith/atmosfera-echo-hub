@@ -6,28 +6,30 @@ lvgl:
       bg_color: 0x05070C
       widgets:
         - obj:
+            id: settings_shell
+            width: 760
+            height: 760
+            align: CENTER
+            bg_color: 0x10131B
+            border_width: 1
+            border_color: 0x2A3344
+            radius: 0
+            pad_all: 0
+            scrollable: false
+            clickable: false
+        - obj:
             id: settings_root
             width: 800
             height: 800
             align: CENTER
             bg_color: 0x05070C
+            bg_opa: 100%
             border_width: 0
-            radius: 400
+            radius: 0
             pad_all: 0
             scrollable: true
-            scrollbar_mode: auto
+            scrollbar_mode: "off"
             widgets:
-              - obj:
-                  width: 760
-                  height: 760
-                  align: CENTER
-                  bg_color: 0x10131B
-                  border_width: 1
-                  border_color: 0x2A3344
-                  radius: 380
-                  pad_all: 0
-                  scrollable: false
-                  gesture_bubble: true
               - label:
                   text: "Settings"
                   align: TOP_MID
@@ -43,7 +45,7 @@ lvgl:
                   width: 140
                   text_align: CENTER
                   bg_color: 0x1B1F2A
-                  bg_opa: 80%
+                  bg_opa: 100%
                   radius: 16
                   pad_top: 4
                   pad_bottom: 4
@@ -84,7 +86,7 @@ lvgl:
                         text_font: roboto_16
                   on_click:
                     then:
-                      - switch.toggle: settings_true_colour_switch
+                      - switch.turn_on: settings_true_colour_switch
                       - script.execute: ui_apply_settings_state
               - button:
                   id: settings_screen_tone_button
@@ -469,10 +471,10 @@ lvgl:
             y: 0
             width: 800
             height: 800
-            bg_color: 0xFFD7A8
-            bg_opa: 14%
+            bg_color: 0x05070C
+            bg_opa: 100%
             border_width: 0
-            radius: 400
+            radius: 0
             pad_all: 0
             scrollable: false
             clickable: false

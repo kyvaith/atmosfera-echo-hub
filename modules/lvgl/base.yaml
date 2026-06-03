@@ -11,9 +11,12 @@ lvgl:
   byte_order: ${display_byte_order}
   bg_color: 0x05070C
   fps_benchmark: true
-  perf_monitor: true
+  # We expose FPS/CPU through our own settings-controlled HUD; keep LVGL's
+  # native sysmon disabled so it does not add another always-on overlay/timer.
+  perf_monitor: false
   color_depth: 32
-  use_ppa: true
-  use_ppa_img: true
+  use_ppa: ${lvgl_use_ppa}
+  use_ppa_img: ${lvgl_use_ppa_img}
+  profiler: ${lvgl_profiler_enabled}
   default_font: roboto_14
   text_font: roboto_24

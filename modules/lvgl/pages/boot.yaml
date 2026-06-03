@@ -12,7 +12,7 @@ lvgl:
             align: CENTER
             bg_color: 0x05070C
             border_width: 0
-            radius: 400
+            radius: 0
             pad_all: 0
             scrollable: false
             widgets:
@@ -23,7 +23,7 @@ lvgl:
                   bg_color: 0x10131B
                   border_width: 1
                   border_color: 0x2A3344
-                  radius: 380
+                  radius: 0
                   pad_all: 0
                   scrollable: false
               - obj:
@@ -31,20 +31,21 @@ lvgl:
                   width: 260
                   height: 260
                   align: CENTER
-                  bg_opa: TRANSP
+                  bg_color: 0x10131B
+                  bg_opa: 100%
                   border_width: 0
                   radius: 130
                   pad_all: 0
                   scrollable: false
                   widgets:
-                    - lottie:
-                        id: boot_esphome_logo
-                        file: "assets/animations/ESPHome.json"
+                    - label:
+                        id: boot_logo_mark
+                        text: "AEH"
                         width: 220
-                        height: 220
                         align: CENTER
-                        loop: true
-                        auto_start: false
+                        text_align: CENTER
+                        text_color: 0xD0BCFF
+                        text_font: roboto_36
               - label:
                   text: "Atmosfera Echo Hub"
                   align: CENTER

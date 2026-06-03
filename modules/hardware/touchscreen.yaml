@@ -23,11 +23,16 @@ touchscreen:
             id(touch_start_y) = touch.y;
             id(touch_last_x) = touch.x;
             id(touch_last_y) = touch.y;
-        - lvgl.resume:
-        - script.execute: display_wake
+
+            const uint32_t now = millis();
+            id(display_last_interaction_ms) = now;
+            if (id(boot_sequence_done) && !id(display_awake)) {
+              id(display_wake).execute();
+            }
     on_update:
       then:
         - lambda: |-
+            const uint32_t perf_start_us = micros();
             if (!id(touch_tracking) || touches.empty()) {
               return;
             }
@@ -43,6 +48,14 @@ touchscreen:
             const bool player_close_drag = id(ui_page) == 0 && !id(media_speaker_panel_open) && dy < -18 && abs_dy > abs_dx;
             const bool settings_close_drag = false;
             const uint32_t now = millis();
+            auto log_slow_update = [&](const char *action) {
+              if (!id(settings_perf_logs_switch).state) return;
+              const uint32_t elapsed_us = micros() - perf_start_us;
+              if (elapsed_us >= 3000) {
+                ESP_LOGW("touch.perf", "update action=%s page=%d dx=%d dy=%d elapsed=%uus snapshot=%d",
+                         action, id(ui_page), dx, dy, elapsed_us, id(touch_snapshot_active));
+              }
+            };
 
             if (horizontal_drag) {
               int page_dx = dx < -800 ? -800 : (dx > 800 ? 800 : dx);
@@ -103,6 +116,7 @@ touchscreen:
                 if (neighbor_page == 3) lv_obj_set_x(id(controls_root_3), neighbor_x);
                 if (neighbor_page == 4) lv_obj_set_x(id(controls_root_4), neighbor_x);
               }
+              log_slow_update("tile_swipe");
             } else if (player_close_drag) {
               if (!id(touch_dragging)) {
                 id(touch_dragging) = true;
@@ -113,6 +127,7 @@ touchscreen:
               }
               id(touch_last_render_ms) = now;
               lv_obj_set_y(id(wear_root), dy);
+              log_slow_update("player_close");
             } else if (settings_close_drag) {
               if (!id(touch_dragging)) {
                 id(touch_dragging) = true;
@@ -123,10 +138,12 @@ touchscreen:
               }
               id(touch_last_render_ms) = now;
               lv_obj_set_y(id(settings_root), dy);
+              log_slow_update("settings_close");
             }
     on_release:
       then:
         - lambda: |-
+            const uint32_t perf_start_us = micros();
             if (!id(touch_tracking)) {
               if (id(settings_swipe_logs_switch).state) {
                 ESP_LOGI("touch.debug", "touch release without active tracking");
@@ -149,6 +166,25 @@ touchscreen:
                 (release_drag_dir == 1 && dx < -commit_x) ||
                 (release_drag_dir == -1 && dx > commit_x);
             bool changed_page = false;
+            bool ran_tile_cleanup = false;
+
+            auto cleanup_tile_drag = [&]() {
+              if (ran_tile_cleanup) return;
+              ran_tile_cleanup = true;
+              const int offset = id(ui_page) >= 1 && id(ui_page) <= 4 ? -((id(ui_page) - 1) * 800) : 0;
+              lv_obj_set_x(id(controls_root_1), offset);
+              lv_obj_set_x(id(controls_root_2), offset + 800);
+              lv_obj_set_x(id(controls_root_3), offset + 1600);
+              lv_obj_set_x(id(controls_root_4), offset + 2400);
+              lv_obj_add_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_add_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_add_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_add_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
+              if (id(ui_page) == 1) lv_obj_clear_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
+              if (id(ui_page) == 2) lv_obj_clear_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
+              if (id(ui_page) == 3) lv_obj_clear_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
+              if (id(ui_page) == 4) lv_obj_clear_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
+            };
 
             if (!id(touch_swipe_committed) && id(touch_dragging) && id(ui_page) >= 1 && id(ui_page) <= 4 &&
                 now - id(touch_last_page_swipe_ms) > swipe_cooldown_ms && committed_horizontal_drag && abs_dx > abs_dy) {
@@ -164,24 +200,21 @@ touchscreen:
             } else if (false && id(touch_dragging) && id(ui_page) == 5 && dy < -commit_y && abs_dy > abs_dx) {
               id(ui_show_tiles_1_from_settings).execute();
             } else {
-              lv_obj_set_y(id(wear_root), 0);
-              lv_obj_set_y(id(settings_root), 0);
+              if (id(ui_page) == 0) {
+                lv_obj_set_y(id(wear_root), 0);
+              }
               if (id(touch_snapshot_active)) {
                 lvgl_esphome_snapshot_swipe_finish(0, release_drag_dir * 800, 140, false);
-              } else {
-                const int offset = id(ui_page) >= 1 && id(ui_page) <= 4 ? -((id(ui_page) - 1) * 800) : 0;
-                lv_obj_set_x(id(controls_root_1), offset);
-                lv_obj_set_x(id(controls_root_2), offset + 800);
-                lv_obj_set_x(id(controls_root_3), offset + 1600);
-                lv_obj_set_x(id(controls_root_4), offset + 2400);
-                lv_obj_add_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
-                if (id(ui_page) == 1) lv_obj_clear_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
-                if (id(ui_page) == 2) lv_obj_clear_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
-                if (id(ui_page) == 3) lv_obj_clear_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
-                if (id(ui_page) == 4) lv_obj_clear_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
+              } else if (id(touch_dragging) && id(touch_drag_page) >= 1 && id(touch_drag_page) <= 4) {
+                cleanup_tile_drag();
+              }
+            }
+
+            if (id(settings_perf_logs_switch).state) {
+              const uint32_t elapsed_us = micros() - perf_start_us;
+              if (elapsed_us >= 3000) {
+                ESP_LOGW("touch.perf", "release page=%d dx=%d dy=%d elapsed=%uus drag=%d snapshot=%d tile_cleanup=%d",
+                         id(ui_page), dx, dy, elapsed_us, id(touch_dragging), id(touch_snapshot_active), ran_tile_cleanup);
               }
             }
 

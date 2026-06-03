@@ -23,6 +23,7 @@ class XMOSMicrophone : public I2SAudioIn, public microphone::Microphone, public 
   void set_din_pin(int8_t pin) { this->din_pin_ = (gpio_num_t) pin; }
   void set_pdm(bool pdm) { this->pdm_ = pdm; }
   void set_correct_dc_offset(bool correct_dc_offset) { this->correct_dc_offset_ = correct_dc_offset; }
+  void set_enabled(bool enabled) { this->enabled_ = enabled; }
 
  protected:
   bool start_driver_();
@@ -39,6 +40,7 @@ class XMOSMicrophone : public I2SAudioIn, public microphone::Microphone, public 
   gpio_num_t din_pin_{I2S_GPIO_UNUSED};
   i2s_chan_handle_t rx_handle_{nullptr};
   bool pdm_{false};
+  bool enabled_{true};
   bool correct_dc_offset_{false};
   bool locked_driver_{false};
   int32_t dc_offset_prev_input_{0};

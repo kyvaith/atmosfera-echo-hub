@@ -6,5 +6,6 @@
 /secrets.yaml
 /venv/
 /.tmp/
+/_benchmarks/
 __pycache__/
 *.pyc

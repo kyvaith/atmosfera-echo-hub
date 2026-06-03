@@ -1,0 +1,156 @@
+# Boot-time and Home Assistant memory diagnostics.
+# These values make PSRAM mode/speed visible even when ESP-IDF early boot logs are missed.
+script:
+  - id: log_memory_diagnostics
+    mode: restart
+    then:
+      - lambda: |-
+          const char *mode = "unknown";
+          int speed_mhz = 0;
+          bool fetch_xip = false;
+          bool rodata_xip = false;
+          #if defined(CONFIG_SPIRAM_MODE_HEX)
+          mode = "hex/16-line";
+          #elif defined(CONFIG_SPIRAM_MODE_OCT)
+          mode = "octal/8-line";
+          #elif defined(CONFIG_SPIRAM_MODE_QUAD)
+          mode = "quad/4-line";
+          #endif
+          #if defined(CONFIG_SPIRAM_SPEED)
+          speed_mhz = CONFIG_SPIRAM_SPEED;
+          #endif
+          #if defined(CONFIG_SPIRAM_FETCH_INSTRUCTIONS)
+          fetch_xip = true;
+          #endif
+          #if defined(CONFIG_SPIRAM_RODATA)
+          rodata_xip = true;
+          #endif
+
+          const bool initialized = esp_psram_is_initialized();
+          const size_t psram_size = esp_psram_get_size();
+          const size_t heap_total = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
+          const size_t heap_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+          const size_t heap_largest = heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);
+          const size_t internal_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+          const size_t internal_largest = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+
+          ESP_LOGW("memory.boot",
+                   "PSRAM diagnostic: initialized=%s mode=%s speed=%dMHz size=%uKB heap_total=%uKB heap_free=%uKB "
+                   "largest=%uKB internal_free=%uKB internal_largest=%uKB fetch_xip=%s rodata_xip=%s",
+                   YESNO(initialized), mode, speed_mhz,
+                   (unsigned) (psram_size / 1024U),
+                   (unsigned) (heap_total / 1024U),
+                   (unsigned) (heap_free / 1024U),
+                   (unsigned) (heap_largest / 1024U),
+                   (unsigned) (internal_free / 1024U),
+                   (unsigned) (internal_largest / 1024U),
+                   YESNO(fetch_xip),
+                   YESNO(rodata_xip));
+
+text_sensor:
+  - platform: template
+    id: diagnostics_psram_config
+    name: "PSRAM Configuration"
+    entity_category: diagnostic
+    disabled_by_default: true
+    update_interval: 60s
+    lambda: |-
+      const char *mode = "unknown";
+      int speed_mhz = 0;
+      bool fetch_xip = false;
+      bool rodata_xip = false;
+      #if defined(CONFIG_SPIRAM_MODE_HEX)
+      mode = "hex/16-line";
+      #elif defined(CONFIG_SPIRAM_MODE_OCT)
+      mode = "octal/8-line";
+      #elif defined(CONFIG_SPIRAM_MODE_QUAD)
+      mode = "quad/4-line";
+      #endif
+      #if defined(CONFIG_SPIRAM_SPEED)
+      speed_mhz = CONFIG_SPIRAM_SPEED;
+      #endif
+      #if defined(CONFIG_SPIRAM_FETCH_INSTRUCTIONS)
+      fetch_xip = true;
+      #endif
+      #if defined(CONFIG_SPIRAM_RODATA)
+      rodata_xip = true;
+      #endif
+      char buf[96];
+      snprintf(buf, sizeof(buf), "%s, %dMHz, fetch_xip=%s, rodata_xip=%s",
+               mode, speed_mhz, YESNO(fetch_xip), YESNO(rodata_xip));
+      return std::string(buf);
+
+binary_sensor:
+  - platform: template
+    id: diagnostics_psram_initialized
+    name: "PSRAM Initialized"
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      return esp_psram_is_initialized();
+
+sensor:
+  - platform: template
+    id: diagnostics_psram_size
+    name: "PSRAM Size"
+    entity_category: diagnostic
+    device_class: data_size
+    state_class: measurement
+    disabled_by_default: true
+    unit_of_measurement: "MiB"
+    accuracy_decimals: 2
+    update_interval: 60s
+    lambda: |-
+      return esp_psram_get_size() / 1048576.0f;
+
+  - platform: template
+    id: diagnostics_psram_heap_total
+    name: "PSRAM Heap Total"
+    entity_category: diagnostic
+    device_class: data_size
+    state_class: measurement
+    disabled_by_default: true
+    unit_of_measurement: "MiB"
+    accuracy_decimals: 2
+    update_interval: 60s
+    lambda: |-
+      return heap_caps_get_total_size(MALLOC_CAP_SPIRAM) / 1048576.0f;
+
+  - platform: template
+    id: diagnostics_psram_heap_free
+    name: "PSRAM Heap Free"
+    entity_category: diagnostic
+    device_class: data_size
+    state_class: measurement
+    disabled_by_default: true
+    unit_of_measurement: "MiB"
+    accuracy_decimals: 2
+    update_interval: 10s
+    lambda: |-
+      return heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1048576.0f;
+
+  - platform: template
+    id: diagnostics_psram_largest_free_block
+    name: "PSRAM Largest Free Block"
+    entity_category: diagnostic
+    device_class: data_size
+    state_class: measurement
+    disabled_by_default: true
+    unit_of_measurement: "MiB"
+    accuracy_decimals: 2
+    update_interval: 10s
+    lambda: |-
+      return heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM) / 1048576.0f;
+
+  - platform: template
+    id: diagnostics_internal_heap_free
+    name: "Internal Heap Free"
+    entity_category: diagnostic
+    device_class: data_size
+    state_class: measurement
+    disabled_by_default: true
+    unit_of_measurement: "KiB"
+    accuracy_decimals: 0
+    update_interval: 10s
+    lambda: |-
+      return heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0f;
