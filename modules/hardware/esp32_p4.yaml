@@ -25,6 +25,7 @@ esp32:
       # ESP32-P4 exposes Espressif's xespv extension, not standard RISC-V V.
       # LVGL's RISCV_V path falls back to software emulation here, so keep it off.
       CONFIG_LV_USE_DRAW_SW_ASM: "0"
+      CONFIG_LV_PPA_BURST_LENGTH: "128"
       CONFIG_LV_DRAW_SW_SUPPORT_RGB888: "y"
       CONFIG_LV_DRAW_SW_SUPPORT_ARGB8888: "y"
       CONFIG_LV_DRAW_SW_SUPPORT_ARGB8888_PREMULTIPLIED: "y"
