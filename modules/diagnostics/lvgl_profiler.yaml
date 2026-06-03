@@ -1,6 +1,6 @@
 # Short, opt-in LVGL profiler run used for A/B firmware builds.
-# It opens Settings and performs the same scroll sequence every time, so PPA
-# and non-PPA RGB888 builds can be compared without relying on touch timing.
+# It opens Settings and performs the same scroll sequence every time, then
+# keeps profiling open briefly so manual touch/scroll traces are captured too.
 esphome:
   on_boot:
     priority: -80
@@ -19,33 +19,36 @@ script:
     then:
       - logger.set_level: INFO
       - lambda: |-
-          ESP_LOGI("lvgl.prof", "PROFILE_BEGIN settings_scroll rgb888 ppa=%s ppa_img=%s",
-                   "${lvgl_use_ppa}", "${lvgl_use_ppa_img}");
+          ESP_LOGI("lvgl.prof", "PROFILE_BEGIN settings_scroll rgb565 ppa=%s ppa_img=%s lane=%s pclk=%s",
+                   "${lvgl_use_ppa}", "${lvgl_use_ppa_img}", "${display_lane_bit_rate}", "${display_pclk_frequency}");
+          ESP_LOGI("lvgl.prof", "Builtin profiler is enabled briefly; this diagnostic window intentionally adds overhead.");
           lvgl_esphome_set_perf_logging_enabled(true);
       - script.execute: ui_show_settings
-      - delay: 900ms
+      - delay: 1200ms
       - lambda: |-
           lvgl_esphome_set_profiler_enabled(true);
           lvgl_esphome_profiler_mark("settings_scroll_start");
       - repeat:
-          count: 5
+          count: 6
           then:
             - lambda: |-
                 lvgl_esphome_profiler_mark("settings_scroll_step_down");
-                lv_obj_scroll_by(id(settings_root), 0, -80, LV_ANIM_OFF);
-            - delay: 90ms
-      - delay: 250ms
+                lv_obj_scroll_by(id(settings_root), 0, -96, LV_ANIM_OFF);
+            - delay: 110ms
+      - delay: 350ms
       - repeat:
-          count: 5
+          count: 6
           then:
             - lambda: |-
                 lvgl_esphome_profiler_mark("settings_scroll_step_up");
-                lv_obj_scroll_by(id(settings_root), 0, 80, LV_ANIM_OFF);
-            - delay: 90ms
-      - delay: 500ms
+                lv_obj_scroll_by(id(settings_root), 0, 96, LV_ANIM_OFF);
+            - delay: 110ms
+      - delay: 3s
       - lambda: |-
-          lvgl_esphome_profiler_mark("settings_scroll_end");
+          lvgl_esphome_profiler_mark("manual_capture_end");
           lvgl_esphome_profiler_flush();
           ESP_LOGI("lvgl.prof", "PROFILE_END settings_scroll");
-      - delay: 1s
-      - logger.set_level: WARN
+          lvgl_esphome_set_profiler_enabled(false);
+          lvgl_esphome_set_perf_logging_enabled(true);
+      - lambda: |-
+          ESP_LOGI("lvgl.prof", "PROFILE_CONTINUE perf logging left enabled for live COM observation");

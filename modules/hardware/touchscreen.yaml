@@ -15,7 +15,6 @@ touchscreen:
             id(touch_tracking) = true;
             id(touch_dragging) = false;
             id(touch_swipe_committed) = false;
-            id(touch_snapshot_active) = false;
             id(touch_drag_page) = 0;
             id(touch_drag_dir) = 0;
             id(touch_last_render_ms) = 0;
@@ -52,8 +51,8 @@ touchscreen:
               if (!id(settings_perf_logs_switch).state) return;
               const uint32_t elapsed_us = micros() - perf_start_us;
               if (elapsed_us >= 3000) {
-                ESP_LOGW("touch.perf", "update action=%s page=%d dx=%d dy=%d elapsed=%uus snapshot=%d",
-                         action, id(ui_page), dx, dy, elapsed_us, id(touch_snapshot_active));
+                ESP_LOGW("touch.perf", "update action=%s page=%d dx=%d dy=%d elapsed=%uus",
+                         action, id(ui_page), dx, dy, elapsed_us);
               }
             };
 
@@ -79,15 +78,6 @@ touchscreen:
                 if (drag_page == 2 || neighbor_page == 2) lv_obj_clear_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
                 if (drag_page == 3 || neighbor_page == 3) lv_obj_clear_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
                 if (drag_page == 4 || neighbor_page == 4) lv_obj_clear_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
-
-                lv_obj_t *current_root = drag_page == 1 ? id(controls_root_1) :
-                                         drag_page == 2 ? id(controls_root_2) :
-                                         drag_page == 3 ? id(controls_root_3) : id(controls_root_4);
-                lv_obj_t *neighbor_root = neighbor_page == 1 ? id(controls_root_1) :
-                                          neighbor_page == 2 ? id(controls_root_2) :
-                                          neighbor_page == 3 ? id(controls_root_3) : id(controls_root_4);
-                id(touch_snapshot_active) =
-                    lvgl_esphome_snapshot_swipe_begin(current_root, neighbor_root, 800, drag_dir * 800);
               } else {
                 drag_page = id(touch_drag_page);
                 drag_dir = id(touch_drag_dir);
@@ -104,18 +94,14 @@ touchscreen:
                 page_dx = 0;
               }
               const int neighbor_x = (drag_dir * 800) + page_dx;
-              if (id(touch_snapshot_active)) {
-                lvgl_esphome_snapshot_swipe_update(page_dx, neighbor_x);
-              } else {
-                if (drag_page == 1) lv_obj_set_x(id(controls_root_1), page_dx);
-                if (drag_page == 2) lv_obj_set_x(id(controls_root_2), page_dx);
-                if (drag_page == 3) lv_obj_set_x(id(controls_root_3), page_dx);
-                if (drag_page == 4) lv_obj_set_x(id(controls_root_4), page_dx);
-                if (neighbor_page == 1) lv_obj_set_x(id(controls_root_1), neighbor_x);
-                if (neighbor_page == 2) lv_obj_set_x(id(controls_root_2), neighbor_x);
-                if (neighbor_page == 3) lv_obj_set_x(id(controls_root_3), neighbor_x);
-                if (neighbor_page == 4) lv_obj_set_x(id(controls_root_4), neighbor_x);
-              }
+              if (drag_page == 1) lv_obj_set_x(id(controls_root_1), page_dx);
+              if (drag_page == 2) lv_obj_set_x(id(controls_root_2), page_dx);
+              if (drag_page == 3) lv_obj_set_x(id(controls_root_3), page_dx);
+              if (drag_page == 4) lv_obj_set_x(id(controls_root_4), page_dx);
+              if (neighbor_page == 1) lv_obj_set_x(id(controls_root_1), neighbor_x);
+              if (neighbor_page == 2) lv_obj_set_x(id(controls_root_2), neighbor_x);
+              if (neighbor_page == 3) lv_obj_set_x(id(controls_root_3), neighbor_x);
+              if (neighbor_page == 4) lv_obj_set_x(id(controls_root_4), neighbor_x);
               log_slow_update("tile_swipe");
             } else if (player_close_drag) {
               if (!id(touch_dragging)) {
@@ -192,9 +178,7 @@ touchscreen:
               id(touch_last_page_swipe_ms) = now;
               changed_page = true;
               id(ui_page) = id(ui_page) + release_drag_dir;
-              if (id(touch_snapshot_active)) {
-                lvgl_esphome_snapshot_swipe_finish(release_drag_dir == 1 ? -800 : 800, 0, 140, true);
-              }
+              cleanup_tile_drag();
             } else if (id(touch_dragging) && id(ui_page) == 0 && dy < -commit_y && abs_dy > abs_dx) {
               id(ui_show_tiles_1_from_player).execute();
             } else if (false && id(touch_dragging) && id(ui_page) == 5 && dy < -commit_y && abs_dy > abs_dx) {
@@ -203,9 +187,7 @@ touchscreen:
               if (id(ui_page) == 0) {
                 lv_obj_set_y(id(wear_root), 0);
               }
-              if (id(touch_snapshot_active)) {
-                lvgl_esphome_snapshot_swipe_finish(0, release_drag_dir * 800, 140, false);
-              } else if (id(touch_dragging) && id(touch_drag_page) >= 1 && id(touch_drag_page) <= 4) {
+              if (id(touch_dragging) && id(touch_drag_page) >= 1 && id(touch_drag_page) <= 4) {
                 cleanup_tile_drag();
               }
             }
@@ -213,12 +195,10 @@ touchscreen:
             if (id(settings_perf_logs_switch).state) {
               const uint32_t elapsed_us = micros() - perf_start_us;
               if (elapsed_us >= 3000) {
-                ESP_LOGW("touch.perf", "release page=%d dx=%d dy=%d elapsed=%uus drag=%d snapshot=%d tile_cleanup=%d",
-                         id(ui_page), dx, dy, elapsed_us, id(touch_dragging), id(touch_snapshot_active), ran_tile_cleanup);
+                ESP_LOGW("touch.perf", "release page=%d dx=%d dy=%d elapsed=%uus drag=%d tile_cleanup=%d",
+                         id(ui_page), dx, dy, elapsed_us, id(touch_dragging), ran_tile_cleanup);
               }
             }
-
-            id(touch_snapshot_active) = false;
 
             id(touch_dragging) = false;
             id(touch_drag_page) = 0;

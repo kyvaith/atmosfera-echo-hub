@@ -50,15 +50,6 @@ esphome:
           id(display_awake) = true;
           id(display_last_interaction_ms) = millis();
       - script.execute: ui_apply_settings_state
-      - delay: 500ms
-      - lambda: |-
-          lvgl_esphome_snapshot_cache_page(id(controls_root_1));
-          lvgl_esphome_snapshot_cache_page(id(controls_root_2));
-          lvgl_esphome_snapshot_cache_page(id(controls_root_3));
-          lvgl_esphome_snapshot_cache_page(id(controls_root_4));
-          lvgl_esphome_snapshot_cache_pair(id(controls_root_1), id(controls_root_2), 800);
-          lvgl_esphome_snapshot_cache_pair(id(controls_root_2), id(controls_root_3), 800);
-          lvgl_esphome_snapshot_cache_pair(id(controls_root_3), id(controls_root_4), 800);
 
 ota:
   - platform: esphome

@@ -35,10 +35,17 @@ substitutions:
   display_height: "800"
   display_brightness_default: "85"
   display_timeout_default: "60"
-  display_update_interval: 16ms
+  display_update_interval: 10ms
   display_buffer_size: 100%
   display_byte_order: little_endian
-  display_pclk_frequency: 60MHz
+  display_pclk_frequency: 48MHz
+  display_lane_bit_rate: 1.5Gbps
+  display_hsync_back_porch: "40"
+  display_hsync_pulse_width: "6"
+  display_hsync_front_porch: "120"
+  display_vsync_back_porch: "12"
+  display_vsync_pulse_width: "4"
+  display_vsync_front_porch: "16"
   lvgl_use_ppa: "true"
   lvgl_use_ppa_img: "true"
   lvgl_profiler_enabled: "false"

@@ -17,10 +17,6 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-  - id: touch_snapshot_active
-    type: bool
-    restore_value: no
-    initial_value: 'false'
   - id: touch_drag_page
     type: int
     restore_value: no
@@ -178,7 +174,8 @@ script:
   - id: ui_apply_settings_state
     then:
       - lambda: |-
-          lvgl_esphome_set_perf_logging_enabled(id(settings_perf_logs_switch).state);
+          const bool force_perf_logs = ${lvgl_profiler_auto_run};
+          lvgl_esphome_set_perf_logging_enabled(force_perf_logs || id(settings_perf_logs_switch).state);
           lvgl_esphome_set_swipe_logging_enabled(id(settings_swipe_logs_switch).state);
 
           if (id(perf_overlay_label) != nullptr) {
@@ -267,5 +264,5 @@ script:
           set_screen_tone(id(screen_tone_overlay_music), false);
 
           if (id(settings_true_colour_note) != nullptr) {
-            lv_label_set_text(id(settings_true_colour_note), "LVGL RGB888 / DSI 24-bit");
+            lv_label_set_text(id(settings_true_colour_note), "LVGL ARGB8888 / DSI 24-bit");
           }

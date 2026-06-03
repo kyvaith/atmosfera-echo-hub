@@ -31,6 +31,13 @@ display:
     color_depth: 24
     pixel_mode: 24
     pclk_frequency: ${display_pclk_frequency}
+    lane_bit_rate: ${display_lane_bit_rate}
+    hsync_back_porch: ${display_hsync_back_porch}
+    hsync_pulse_width: ${display_hsync_pulse_width}
+    hsync_front_porch: ${display_hsync_front_porch}
+    vsync_back_porch: ${display_vsync_back_porch}
+    vsync_pulse_width: ${display_vsync_pulse_width}
+    vsync_front_porch: ${display_vsync_front_porch}
     reset_pin:
       number: GPIO27
       inverted: false

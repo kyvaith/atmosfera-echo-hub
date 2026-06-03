@@ -7,8 +7,6 @@ esp32:
   engineering_sample: true
   framework:
     type: esp-idf
-    version: 5.5.2
-    platform_version: 55.03.35
     advanced:
       enable_idf_experimental_features: true
       compiler_optimization: PERF
@@ -22,6 +20,7 @@ esp32:
       CONFIG_SPIRAM_USE_MALLOC: "y"
       CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "1024"
       CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "32768"
+      CONFIG_LV_DEF_REFR_PERIOD: "10"
       # ESP32-P4 exposes Espressif's xespv extension, not standard RISC-V V.
       # LVGL's RISCV_V path falls back to software emulation here, so keep it off.
       CONFIG_LV_USE_DRAW_SW_ASM: "0"
@@ -29,6 +28,12 @@ esp32:
       CONFIG_LV_DRAW_SW_SUPPORT_RGB888: "y"
       CONFIG_LV_DRAW_SW_SUPPORT_ARGB8888: "y"
       CONFIG_LV_DRAW_SW_SUPPORT_ARGB8888_PREMULTIPLIED: "y"
+      # Keep DSI interrupt work and objects in internal memory. These are
+      # normally selected by IDF already, but listing them keeps the display
+      # latency assumptions explicit in this project.
+      CONFIG_LCD_DSI_ISR_HANDLER_IN_IRAM: "y"
+      CONFIG_LCD_DSI_OBJ_FORCE_INTERNAL: "y"
+      CONFIG_ESP_IPC_ENABLE: "y"
       CONFIG_ESPTOOLPY_FLASHMODE_QIO: "y"
       CONFIG_PARTITION_TABLE_OFFSET: "0x9000"
 

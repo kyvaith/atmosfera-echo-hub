@@ -79,7 +79,7 @@ lvgl:
                         text_font: roboto_24
                     - label:
                         id: settings_true_colour_note
-                        text: "RGB888 Active"
+                        text: "True Colour Active"
                         x: 28
                         y: 52
                         text_color: 0xAEB4C2
