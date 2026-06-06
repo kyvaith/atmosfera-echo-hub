@@ -30,8 +30,10 @@ display:
     model: WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-3.4C
     color_depth: 24
     pixel_mode: 24
+    draw_rounding: ${display_draw_rounding}
     pclk_frequency: ${display_pclk_frequency}
     lane_bit_rate: ${display_lane_bit_rate}
+    async_lvgl_flush: true
     hsync_back_porch: ${display_hsync_back_porch}
     hsync_pulse_width: ${display_hsync_pulse_width}
     hsync_front_porch: ${display_hsync_front_porch}

@@ -18,9 +18,13 @@ esp32:
       CONFIG_SPIRAM_SPEED_200M: "y"
       CONFIG_SPIRAM_SPEED: "200"
       CONFIG_SPIRAM_USE_MALLOC: "y"
-      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "1024"
-      CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "32768"
+      # Keep early FreeRTOS/system allocations in internal RAM. The timer
+      # service task stack can be allocated as stack words, so keep allocations
+      # up to 16 KB away from PSRAM during scheduler startup.
+      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "16384"
+      CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "65536"
       CONFIG_LV_DEF_REFR_PERIOD: "10"
+      CONFIG_LV_USE_LOG: "0"
       # ESP32-P4 exposes Espressif's xespv extension, not standard RISC-V V.
       # LVGL's RISCV_V path falls back to software emulation here, so keep it off.
       CONFIG_LV_USE_DRAW_SW_ASM: "0"

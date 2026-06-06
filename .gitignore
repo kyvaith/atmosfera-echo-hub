@@ -7,5 +7,6 @@
 /venv/
 /.tmp/
 /_benchmarks/
+/profiles/
 __pycache__/
 *.pyc

@@ -5,69 +5,114 @@ globals:
     type: int
     restore_value: no
     initial_value: '1'
-  - id: touch_tracking
+  - id: tile_swipe_tracking
     type: bool
     restore_value: no
     initial_value: 'false'
-  - id: touch_dragging
+  - id: tile_swipe_dragging
     type: bool
     restore_value: no
     initial_value: 'false'
-  - id: touch_swipe_committed
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: touch_drag_page
+  - id: tile_swipe_page
     type: int
     restore_value: no
     initial_value: '0'
-  - id: touch_drag_dir
+  - id: tile_swipe_next_page
     type: int
     restore_value: no
     initial_value: '0'
-  - id: touch_last_render_ms
+  - id: tile_swipe_next_x
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: tile_swipe_commit_latched
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: tile_swipe_start_x
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: tile_swipe_start_y
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: tile_swipe_last_x
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: tile_swipe_last_y
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: tile_swipe_last_render_ms
     type: uint32_t
-    restore_value: no
-    initial_value: '0'
-  - id: touch_last_page_swipe_ms
-    type: uint32_t
-    restore_value: no
-    initial_value: '0'
-  - id: touch_start_x
-    type: int
-    restore_value: no
-    initial_value: '0'
-  - id: touch_start_y
-    type: int
-    restore_value: no
-    initial_value: '0'
-  - id: touch_last_x
-    type: int
-    restore_value: no
-    initial_value: '0'
-  - id: touch_last_y
-    type: int
     restore_value: no
     initial_value: '0'
 
 script:
+  - id: ui_apply_tile_visibility
+    then:
+      - lambda: |-
+          auto show_active = [](lv_obj_t *obj, int page, int tile_page) {
+            if (obj == nullptr) return;
+            lv_obj_align(obj, LV_ALIGN_CENTER, 0, 0);
+            if (page == tile_page) {
+              lv_obj_clear_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            } else {
+              lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            }
+          };
+
+          show_active(id(controls_root_1), id(ui_page), 1);
+          show_active(id(controls_root_2), id(ui_page), 2);
+          show_active(id(controls_root_3), id(ui_page), 3);
+          show_active(id(controls_root_4), id(ui_page), 4);
+
+  - id: ui_cull_settings_rows
+    then:
+      - lambda: |-
+          if (id(settings_root) == nullptr) return;
+          const int scroll_y = lv_obj_get_scroll_y(id(settings_root));
+          constexpr int screen_h = 800;
+          constexpr int margin = 180;
+
+          auto cull_row = [&](lv_obj_t *obj) {
+            if (obj == nullptr) return;
+            const int y = lv_obj_get_y(obj) - scroll_y;
+            const int h = lv_obj_get_height(obj);
+            const bool visible = (y + h) >= -margin && y <= (screen_h + margin);
+            const bool hidden = lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            if (visible && hidden) {
+              lv_obj_clear_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            } else if (!visible && !hidden) {
+              lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            }
+          };
+
+          cull_row(id(settings_true_colour_button));
+          cull_row(id(settings_screen_tone_button));
+          cull_row(id(settings_perf_overlay_button));
+          cull_row(id(settings_system_logs_button));
+          cull_row(id(settings_perf_logs_button));
+          cull_row(id(settings_swipe_logs_button));
+          cull_row(id(settings_beta_firmware_button));
+          cull_row(id(settings_display_brightness_button));
+          cull_row(id(settings_display_timeout_button));
+          cull_row(id(settings_voice_mute_button));
+          cull_row(id(settings_wake_sound_button));
+          cull_row(id(settings_wake_sensitivity_button));
+
   - id: ui_show_tiles_1
     then:
       - lambda: |-
-          lv_obj_clear_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
           lv_obj_add_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
           lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_set_x(id(controls_root_1), 0);
-          lv_obj_set_x(id(controls_root_2), 800);
-          lv_obj_set_x(id(controls_root_3), 1600);
-          lv_obj_set_x(id(controls_root_4), 2400);
           lv_obj_set_y(id(wear_root), 0);
       - globals.set:
           id: ui_page
           value: '1'
+      - script.execute: ui_apply_tile_visibility
   - id: ui_show_tiles_1_from_player
     then:
       - script.execute: ui_show_tiles_1
@@ -78,72 +123,47 @@ script:
   - id: ui_show_tiles_2
     then:
       - lambda: |-
-          lv_obj_add_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_clear_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
           lv_obj_add_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
           lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_set_x(id(controls_root_1), -800);
-          lv_obj_set_x(id(controls_root_2), 0);
-          lv_obj_set_x(id(controls_root_3), 800);
-          lv_obj_set_x(id(controls_root_4), 1600);
           lv_obj_set_y(id(wear_root), 0);
       - globals.set:
           id: ui_page
           value: '2'
+      - script.execute: ui_apply_tile_visibility
   - id: ui_show_tiles_3
     then:
       - lambda: |-
-          lv_obj_add_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_clear_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
           lv_obj_add_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
           lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_set_x(id(controls_root_1), -1600);
-          lv_obj_set_x(id(controls_root_2), -800);
-          lv_obj_set_x(id(controls_root_3), 0);
-          lv_obj_set_x(id(controls_root_4), 800);
           lv_obj_set_y(id(wear_root), 0);
       - globals.set:
           id: ui_page
           value: '3'
+      - script.execute: ui_apply_tile_visibility
   - id: ui_show_tiles_4
     then:
       - lambda: |-
-          lv_obj_add_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_clear_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
           lv_obj_add_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
           lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_set_x(id(controls_root_1), -2400);
-          lv_obj_set_x(id(controls_root_2), -1600);
-          lv_obj_set_x(id(controls_root_3), -800);
-          lv_obj_set_x(id(controls_root_4), 0);
           lv_obj_set_y(id(wear_root), 0);
       - globals.set:
           id: ui_page
           value: '4'
+      - script.execute: ui_apply_tile_visibility
   - id: ui_show_player
     then:
       - lambda: |-
-          lv_obj_clear_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
           lv_obj_clear_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
           if (lv_obj_has_flag(id(album_art_background_widget), LV_OBJ_FLAG_HIDDEN)) {
             lv_obj_clear_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
           } else {
             lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
           }
-          lv_obj_set_x(id(controls_root_1), 0);
-          lv_obj_set_x(id(controls_root_2), 800);
-          lv_obj_set_x(id(controls_root_3), 1600);
-          lv_obj_set_x(id(controls_root_4), 2400);
           lv_obj_set_y(id(wear_root), 0);
+      - globals.set:
+          id: ui_page
+          value: '1'
+      - script.execute: ui_apply_tile_visibility
       - globals.set:
           id: ui_page
           value: '0'
@@ -160,6 +180,7 @@ script:
           id: ui_page
           value: '5'
       - script.execute: ui_apply_settings_state
+      - script.execute: ui_cull_settings_rows
       - lvgl.page.show:
           id: settings_page
           animation: MOVE_BOTTOM
@@ -187,13 +208,23 @@ script:
             }
           }
 
-          auto set_toggle = [](lv_obj_t *button, lv_obj_t *value, bool on) {
+          auto set_label_text_if_changed = [](lv_obj_t *label, const char *text) {
+            if (label == nullptr || text == nullptr) return;
+            const char *current = lv_label_get_text(label);
+            if (current == nullptr || strcmp(current, text) != 0) {
+              lv_label_set_text(label, text);
+            }
+          };
+
+          auto set_toggle = [&set_label_text_if_changed](lv_obj_t *button, lv_obj_t *value, bool on) {
             if (button != nullptr) {
-              lv_obj_set_style_bg_color(button, lv_color_hex(on ? 0x173B34 : 0x1B1F2A), 0);
-              lv_obj_set_style_border_color(button, lv_color_hex(on ? 0x8CEED1 : 0x343B4C), 0);
+              lv_obj_set_style_bg_color(button, lv_color_hex(0x1B1F2A), 0);
+              lv_obj_set_style_border_width(button, 0, 0);
+              lv_obj_set_style_shadow_width(button, 0, 0);
+              lv_obj_set_style_outline_width(button, 0, 0);
             }
             if (value != nullptr) {
-              lv_label_set_text(value, on ? "ON" : "OFF");
+              set_label_text_if_changed(value, on ? "ON" : "OFF");
               lv_obj_set_style_text_color(value, lv_color_hex(on ? 0xA8F4DF : 0xAEB4C2), 0);
             }
           };
@@ -209,7 +240,7 @@ script:
 
           set_toggle(id(settings_true_colour_button), id(settings_true_colour_value), true);
           if (id(settings_true_colour_value) != nullptr) {
-            lv_label_set_text(id(settings_true_colour_value), "RGB888");
+            set_label_text_if_changed(id(settings_true_colour_value), "RGB888");
           }
           const bool screen_tone_render_enabled = false;  // Screen Tone currently requires an alpha overlay.
           set_toggle(id(settings_screen_tone_button), id(settings_screen_tone_value),
@@ -223,18 +254,22 @@ script:
           set_toggle(id(settings_wake_sound_button), id(settings_wake_sound_value), id(voice_assistant_wake_sound_switch).state);
 
           if (id(settings_display_brightness_button) != nullptr) {
-            lv_obj_set_style_bg_color(id(settings_display_brightness_button), lv_color_hex(0x2B303B), 0);
-            lv_obj_set_style_border_color(id(settings_display_brightness_button), lv_color_hex(0x735E9A), 0);
+            lv_obj_set_style_bg_color(id(settings_display_brightness_button), lv_color_hex(0x1B1F2A), 0);
+            lv_obj_set_style_border_width(id(settings_display_brightness_button), 0, 0);
+            lv_obj_set_style_shadow_width(id(settings_display_brightness_button), 0, 0);
+            lv_obj_set_style_outline_width(id(settings_display_brightness_button), 0, 0);
           }
           if (id(settings_display_brightness_value) != nullptr) {
             char brightness_buf[12];
             snprintf(brightness_buf, sizeof(brightness_buf), "%d%%", (int)(id(settings_display_brightness).state + 0.5f));
-            lv_label_set_text(id(settings_display_brightness_value), brightness_buf);
+            set_label_text_if_changed(id(settings_display_brightness_value), brightness_buf);
           }
 
           if (id(settings_display_timeout_button) != nullptr) {
-            lv_obj_set_style_bg_color(id(settings_display_timeout_button), lv_color_hex(0x2B303B), 0);
-            lv_obj_set_style_border_color(id(settings_display_timeout_button), lv_color_hex(0x735E9A), 0);
+            lv_obj_set_style_bg_color(id(settings_display_timeout_button), lv_color_hex(0x1B1F2A), 0);
+            lv_obj_set_style_border_width(id(settings_display_timeout_button), 0, 0);
+            lv_obj_set_style_shadow_width(id(settings_display_timeout_button), 0, 0);
+            lv_obj_set_style_outline_width(id(settings_display_timeout_button), 0, 0);
           }
           if (id(settings_display_timeout_value) != nullptr) {
             char timeout_buf[16];
@@ -244,7 +279,7 @@ script:
             } else {
               snprintf(timeout_buf, sizeof(timeout_buf), "%ds", timeout_s);
             }
-            lv_label_set_text(id(settings_display_timeout_value), timeout_buf);
+            set_label_text_if_changed(id(settings_display_timeout_value), timeout_buf);
           }
 
           if (id(settings_wake_sensitivity_value) != nullptr) {
@@ -256,7 +291,7 @@ script:
             } else if (sensitivity == "Very sensitive") {
               sensitivity = "Very";
             }
-            lv_label_set_text(id(settings_wake_sensitivity_value), sensitivity.c_str());
+            set_label_text_if_changed(id(settings_wake_sensitivity_value), sensitivity.c_str());
           }
 
           set_screen_tone(id(screen_tone_overlay_controls), false);
@@ -264,5 +299,5 @@ script:
           set_screen_tone(id(screen_tone_overlay_music), false);
 
           if (id(settings_true_colour_note) != nullptr) {
-            lv_label_set_text(id(settings_true_colour_note), "LVGL ARGB8888 / DSI 24-bit");
+            set_label_text_if_changed(id(settings_true_colour_note), "LVGL ARGB8888 / DSI 24-bit");
           }

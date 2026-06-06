@@ -8,7 +8,7 @@ font:
       weight: 400
     id: roboto_14
     size: 14
-    bpp: 4
+    bpp: 2
     glyphsets:
       - GF_Latin_Core
     ignore_missing_glyphs: true
@@ -19,7 +19,7 @@ font:
       weight: 400
     id: roboto_16
     size: 16
-    bpp: 4
+    bpp: 2
     glyphsets:
       - GF_Latin_Core
     ignore_missing_glyphs: true
@@ -30,7 +30,7 @@ font:
       weight: 400
     id: roboto_18
     size: 18
-    bpp: 4
+    bpp: 2
     glyphsets:
       - GF_Latin_Core
     ignore_missing_glyphs: true
@@ -41,7 +41,7 @@ font:
       weight: 500
     id: roboto_20
     size: 20
-    bpp: 4
+    bpp: 2
     glyphsets:
       - GF_Latin_Core
     ignore_missing_glyphs: true
@@ -52,7 +52,7 @@ font:
       weight: 500
     id: roboto_24
     size: 24
-    bpp: 4
+    bpp: 2
     glyphsets:
       - GF_Latin_Core
     ignore_missing_glyphs: true
@@ -63,7 +63,7 @@ font:
       weight: 500
     id: roboto_30
     size: 30
-    bpp: 4
+    bpp: 2
     glyphsets:
       - GF_Latin_Core
     ignore_missing_glyphs: true
@@ -74,7 +74,7 @@ font:
       weight: 500
     id: roboto_34
     size: 34
-    bpp: 4
+    bpp: 2
     glyphsets:
       - GF_Latin_Core
     ignore_missing_glyphs: true
@@ -85,7 +85,7 @@ font:
       weight: 500
     id: roboto_36
     size: 36
-    bpp: 4
+    bpp: 2
     glyphsets:
       - GF_Latin_Core
     ignore_missing_glyphs: true

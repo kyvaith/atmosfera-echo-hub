@@ -6,18 +6,6 @@ lvgl:
       bg_color: 0x05070C
       widgets:
         - obj:
-            id: settings_shell
-            width: 760
-            height: 760
-            align: CENTER
-            bg_color: 0x10131B
-            border_width: 1
-            border_color: 0x2A3344
-            radius: 0
-            pad_all: 0
-            scrollable: false
-            clickable: false
-        - obj:
             id: settings_root
             width: 800
             height: 800
@@ -29,6 +17,9 @@ lvgl:
             pad_all: 0
             scrollable: true
             scrollbar_mode: "off"
+            on_scroll:
+              then:
+                - script.execute: ui_cull_settings_rows
             widgets:
               - label:
                   text: "Settings"
@@ -58,8 +49,13 @@ lvgl:
                   width: 592
                   height: 82
                   radius: 41
-                  bg_color: 0x173B34
-                  border_width: 1
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x8CEED1
                   scrollable: false
                   gesture_bubble: true
@@ -96,7 +92,12 @@ lvgl:
                   height: 76
                   radius: 38
                   bg_color: 0x1B1F2A
-                  border_width: 1
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x343B4C
                   scrollable: false
                   gesture_bubble: true
@@ -126,7 +127,12 @@ lvgl:
                   height: 76
                   radius: 38
                   bg_color: 0x1B1F2A
-                  border_width: 1
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x343B4C
                   scrollable: false
                   gesture_bubble: true
@@ -156,7 +162,12 @@ lvgl:
                   height: 76
                   radius: 38
                   bg_color: 0x1B1F2A
-                  border_width: 1
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x343B4C
                   scrollable: false
                   gesture_bubble: true
@@ -186,7 +197,12 @@ lvgl:
                   height: 76
                   radius: 38
                   bg_color: 0x1B1F2A
-                  border_width: 1
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x343B4C
                   scrollable: false
                   gesture_bubble: true
@@ -216,7 +232,12 @@ lvgl:
                   height: 76
                   radius: 38
                   bg_color: 0x1B1F2A
-                  border_width: 1
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x343B4C
                   scrollable: false
                   gesture_bubble: true
@@ -246,7 +267,12 @@ lvgl:
                   height: 76
                   radius: 38
                   bg_color: 0x1B1F2A
-                  border_width: 1
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x343B4C
                   scrollable: false
                   gesture_bubble: true
@@ -276,7 +302,12 @@ lvgl:
                   height: 76
                   radius: 38
                   bg_color: 0x1B1F2A
-                  border_width: 1
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x343B4C
                   scrollable: false
                   gesture_bubble: true
@@ -311,7 +342,12 @@ lvgl:
                   height: 76
                   radius: 38
                   bg_color: 0x1B1F2A
-                  border_width: 1
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x343B4C
                   scrollable: false
                   gesture_bubble: true
@@ -350,7 +386,12 @@ lvgl:
                   height: 76
                   radius: 38
                   bg_color: 0x1B1F2A
-                  border_width: 1
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x343B4C
                   scrollable: false
                   gesture_bubble: true
@@ -380,7 +421,12 @@ lvgl:
                   height: 76
                   radius: 38
                   bg_color: 0x1B1F2A
-                  border_width: 1
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x343B4C
                   scrollable: false
                   gesture_bubble: true
@@ -409,8 +455,13 @@ lvgl:
                   width: 592
                   height: 86
                   radius: 43
-                  bg_color: 0x2B303B
-                  border_width: 1
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x735E9A
                   scrollable: false
                   gesture_bubble: true
@@ -444,6 +495,16 @@ lvgl:
                   text_align: CENTER
                   text_color: 0xAEB4C2
                   text_font: roboto_16
+              # Keeps the scroll extent stable while off-screen setting rows are culled.
+              - obj:
+                  id: settings_scroll_spacer
+                  x: 0
+                  y: 1250
+                  width: 1
+                  height: 1
+                  bg_opa: 0%
+                  border_width: 0
+                  scrollable: false
         - button:
             id: settings_close_button
             align: TOP_RIGHT
@@ -453,7 +514,11 @@ lvgl:
             height: 70
             radius: 35
             bg_color: 0x1B1F2A
-            border_width: 1
+            border_width: 0
+            shadow_width: 0
+            shadow_opa: 0%
+            outline_width: 0
+            outline_opa: 0%
             border_color: 0x343B4C
             scrollable: false
             widgets:

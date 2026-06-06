@@ -16,6 +16,7 @@ external_components:
       type: git
       url: https://github.com/kyvaith/lvgl_9.5
       ref: main
+      path: components
     components: [lvgl, image, font]
     refresh: always
   - source: github://jtenniswood/esphome-media-player@main

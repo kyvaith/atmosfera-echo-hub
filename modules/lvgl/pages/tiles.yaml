@@ -12,22 +12,12 @@ lvgl:
             align: CENTER
             x: 0
             bg_color: 0x05070C
+            bg_opa: 100%
             border_width: 0
             radius: 0
             pad_all: 0
             scrollable: false
             widgets:
-              - obj:
-                  width: 760
-                  height: 760
-                  align: CENTER
-                  bg_color: 0x10131B
-                  border_width: 1
-                  border_color: 0x2A3344
-                  radius: 0
-                  pad_all: 0
-                  scrollable: false
-                  gesture_bubble: true
               - label:
                   text: "Room"
                   align: TOP_MID
@@ -55,9 +45,14 @@ lvgl:
                   y: 140
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x382D55
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x6D5D9A
                   scrollable: false
                   gesture_bubble: true
@@ -88,9 +83,14 @@ lvgl:
                   y: 140
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x173A3A
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x4F7C7C
                   scrollable: false
                   gesture_bubble: true
@@ -121,9 +121,14 @@ lvgl:
                   y: 315
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x3F2D1D
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x806044
                   scrollable: false
                   gesture_bubble: true
@@ -154,9 +159,14 @@ lvgl:
                   y: 315
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x202D4C
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x536B9D
                   scrollable: false
                   gesture_bubble: true
@@ -187,9 +197,14 @@ lvgl:
                   y: 490
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x2D3038
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x5A6070
                   pad_all: 0
                   scrollable: false
@@ -216,9 +231,14 @@ lvgl:
                   y: 490
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x3B2438
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x735575
                   scrollable: false
                   gesture_bubble: true
@@ -268,24 +288,15 @@ lvgl:
             width: 800
             height: 800
             align: CENTER
-            x: 800
+            x: 0
+            hidden: true
             bg_color: 0x05070C
+            bg_opa: 100%
             border_width: 0
             radius: 0
             pad_all: 0
             scrollable: false
             widgets:
-              - obj:
-                  width: 760
-                  height: 760
-                  align: CENTER
-                  bg_color: 0x10131B
-                  border_width: 1
-                  border_color: 0x2A3344
-                  radius: 0
-                  pad_all: 0
-                  scrollable: false
-                  gesture_bubble: true
               - label:
                   text: "Security"
                   align: TOP_MID
@@ -313,9 +324,14 @@ lvgl:
                   y: 140
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x18344D
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x52789D
                   scrollable: false
                   gesture_bubble: true
@@ -346,9 +362,14 @@ lvgl:
                   y: 140
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x422F1E
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x7D6242
                   scrollable: false
                   gesture_bubble: true
@@ -379,9 +400,14 @@ lvgl:
                   y: 315
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x3F222C
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x815669
                   scrollable: false
                   gesture_bubble: true
@@ -412,9 +438,14 @@ lvgl:
                   y: 315
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x34264A
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x70549A
                   scrollable: false
                   gesture_bubble: true
@@ -445,9 +476,14 @@ lvgl:
                   y: 490
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x213238
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x567278
                   scrollable: false
                   gesture_bubble: true
@@ -470,9 +506,14 @@ lvgl:
                   y: 490
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x1D3824
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x537A5B
                   scrollable: false
                   gesture_bubble: true
@@ -512,24 +553,15 @@ lvgl:
             width: 800
             height: 800
             align: CENTER
-            x: 1600
+            x: 0
+            hidden: true
             bg_color: 0x05070C
+            bg_opa: 100%
             border_width: 0
             radius: 0
             pad_all: 0
             scrollable: false
             widgets:
-              - obj:
-                  width: 760
-                  height: 760
-                  align: CENTER
-                  bg_color: 0x10131B
-                  border_width: 1
-                  border_color: 0x2A3344
-                  radius: 0
-                  pad_all: 0
-                  scrollable: false
-                  gesture_bubble: true
               - label:
                   text: "Sensors"
                   align: TOP_MID
@@ -557,9 +589,14 @@ lvgl:
                   y: 140
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x163B43
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x4D7D8B
                   scrollable: false
                   gesture_bubble: true
@@ -582,9 +619,14 @@ lvgl:
                   y: 140
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x1E2D4D
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x5970A0
                   scrollable: false
                   gesture_bubble: true
@@ -607,9 +649,14 @@ lvgl:
                   y: 315
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x35294F
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x705E9C
                   scrollable: false
                   gesture_bubble: true
@@ -632,9 +679,14 @@ lvgl:
                   y: 315
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x38361F
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x77724A
                   scrollable: false
                   gesture_bubble: true
@@ -657,9 +709,14 @@ lvgl:
                   y: 490
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x3B2440
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x785580
                   scrollable: false
                   gesture_bubble: true
@@ -685,9 +742,14 @@ lvgl:
                   y: 490
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x2B303B
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x5D687A
                   scrollable: false
                   gesture_bubble: true
@@ -730,24 +792,15 @@ lvgl:
             width: 800
             height: 800
             align: CENTER
-            x: 2400
+            x: 0
+            hidden: true
             bg_color: 0x05070C
+            bg_opa: 100%
             border_width: 0
             radius: 0
             pad_all: 0
             scrollable: false
             widgets:
-              - obj:
-                  width: 760
-                  height: 760
-                  align: CENTER
-                  bg_color: 0x10131B
-                  border_width: 1
-                  border_color: 0x2A3344
-                  radius: 0
-                  pad_all: 0
-                  scrollable: false
-                  gesture_bubble: true
               - label:
                   text: "System"
                   align: TOP_MID
@@ -775,9 +828,14 @@ lvgl:
                   y: 140
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x193A3D
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x537E83
                   scrollable: false
                   gesture_bubble: true
@@ -808,9 +866,14 @@ lvgl:
                   y: 140
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x1C3A25
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x547D61
                   scrollable: false
                   gesture_bubble: true
@@ -843,9 +906,14 @@ lvgl:
                   y: 315
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x432642
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x855A81
                   scrollable: false
                   gesture_bubble: true
@@ -874,9 +942,14 @@ lvgl:
                   y: 315
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x30333A
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x626873
                   scrollable: false
                   gesture_bubble: true
@@ -902,9 +975,14 @@ lvgl:
                   y: 490
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x173B43
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x55828B
                   scrollable: false
                   gesture_bubble: true
@@ -930,9 +1008,14 @@ lvgl:
                   y: 490
                   width: 300
                   height: 150
-                  radius: 68
-                  bg_color: 0x173B34
-                  border_width: 1
+                  radius: 75
+                  bg_color: 0x1B1F2A
+                  bg_opa: 100%
+                  border_width: 0
+                  shadow_width: 0
+                  shadow_opa: 0%
+                  outline_width: 0
+                  outline_opa: 0%
                   border_color: 0x8CEED1
                   scrollable: false
                   gesture_bubble: true

@@ -19,9 +19,9 @@ script:
     then:
       - logger.set_level: INFO
       - lambda: |-
-          ESP_LOGI("lvgl.prof", "PROFILE_BEGIN settings_scroll rgb565 ppa=%s ppa_img=%s lane=%s pclk=%s",
+          ESP_LOGI("lvgl.prof", "PROFILE_BEGIN settings_scroll rgb888 ppa=%s ppa_img=%s lane=%s pclk=%s",
                    "${lvgl_use_ppa}", "${lvgl_use_ppa_img}", "${display_lane_bit_rate}", "${display_pclk_frequency}");
-          ESP_LOGI("lvgl.prof", "Builtin profiler is enabled briefly; this diagnostic window intentionally adds overhead.");
+          ESP_LOGI("lvgl.prof", "Manual profiler active for a short controlled settings scroll.");
           lvgl_esphome_set_perf_logging_enabled(true);
       - script.execute: ui_show_settings
       - delay: 1200ms

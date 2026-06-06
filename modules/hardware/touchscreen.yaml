@@ -1,5 +1,6 @@
-# Touch controller and gesture bridge.
-# The touch callbacks translate GT911 events into the custom page-swipe and app-close gestures.
+# Touch controller.
+# Home pages use the snapshot compositor so drag gestures move cached bitmaps
+# while the live LVGL tree is updated only at rest.
 touchscreen:
   - platform: gt911
     id: my_touchscreen
@@ -9,197 +10,147 @@ touchscreen:
     on_touch:
       then:
         - lambda: |-
-            if (id(touch_tracking)) {
-              return;
-            }
-            id(touch_tracking) = true;
-            id(touch_dragging) = false;
-            id(touch_swipe_committed) = false;
-            id(touch_drag_page) = 0;
-            id(touch_drag_dir) = 0;
-            id(touch_last_render_ms) = 0;
-            id(touch_start_x) = touch.x;
-            id(touch_start_y) = touch.y;
-            id(touch_last_x) = touch.x;
-            id(touch_last_y) = touch.y;
-
             const uint32_t now = millis();
             id(display_last_interaction_ms) = now;
             if (id(boot_sequence_done) && !id(display_awake)) {
               id(display_wake).execute();
             }
+
+            const int page = id(ui_page);
+            id(tile_swipe_tracking) = page >= 1 && page <= 4;
+            id(tile_swipe_dragging) = false;
+            id(tile_swipe_page) = page;
+            id(tile_swipe_next_page) = 0;
+            id(tile_swipe_next_x) = 0;
+            id(tile_swipe_commit_latched) = false;
+            id(tile_swipe_start_x) = touch.x;
+            id(tile_swipe_start_y) = touch.y;
+            id(tile_swipe_last_x) = touch.x;
+            id(tile_swipe_last_y) = touch.y;
+            id(tile_swipe_last_render_ms) = 0;
+
     on_update:
       then:
         - lambda: |-
-            const uint32_t perf_start_us = micros();
-            if (!id(touch_tracking) || touches.empty()) {
+            if (touches.empty()) {
               return;
             }
             const auto &touch = touches[0];
-            id(touch_last_x) = touch.x;
-            id(touch_last_y) = touch.y;
 
-            const int dx = id(touch_last_x) - id(touch_start_x);
-            const int dy = id(touch_last_y) - id(touch_start_y);
+            if (!id(tile_swipe_tracking)) {
+              return;
+            }
+            id(tile_swipe_last_x) = touch.x;
+            id(tile_swipe_last_y) = touch.y;
+
+            const int page = id(tile_swipe_page);
+            if (page < 1 || page > 4 || id(ui_page) != page) {
+              return;
+            }
+
+            const int dx = id(tile_swipe_last_x) - id(tile_swipe_start_x);
+            const int dy = id(tile_swipe_last_y) - id(tile_swipe_start_y);
             const int abs_dx = abs(dx);
             const int abs_dy = abs(dy);
-            const bool horizontal_drag = id(ui_page) >= 1 && id(ui_page) <= 4 && abs_dx > 18 && abs_dx > abs_dy;
-            const bool player_close_drag = id(ui_page) == 0 && !id(media_speaker_panel_open) && dy < -18 && abs_dy > abs_dx;
-            const bool settings_close_drag = false;
-            const uint32_t now = millis();
-            auto log_slow_update = [&](const char *action) {
-              if (!id(settings_perf_logs_switch).state) return;
-              const uint32_t elapsed_us = micros() - perf_start_us;
-              if (elapsed_us >= 3000) {
-                ESP_LOGW("touch.perf", "update action=%s page=%d dx=%d dy=%d elapsed=%uus",
-                         action, id(ui_page), dx, dy, elapsed_us);
-              }
-            };
-
-            if (horizontal_drag) {
-              int page_dx = dx < -800 ? -800 : (dx > 800 ? 800 : dx);
-              int drag_dir = page_dx < 0 ? 1 : (page_dx > 0 ? -1 : 0);
-              int drag_page = id(ui_page);
-              int neighbor_page = drag_page + drag_dir;
-              if (drag_dir == 0 || neighbor_page < 1 || neighbor_page > 4) {
-                return;
-              }
-              if (!id(touch_dragging)) {
-                id(touch_dragging) = true;
-                id(touch_drag_page) = drag_page;
-                id(touch_drag_dir) = drag_dir;
-                lv_indev_wait_release(lv_indev_active());
-
-                lv_obj_add_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
-                if (drag_page == 1 || neighbor_page == 1) lv_obj_clear_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
-                if (drag_page == 2 || neighbor_page == 2) lv_obj_clear_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
-                if (drag_page == 3 || neighbor_page == 3) lv_obj_clear_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
-                if (drag_page == 4 || neighbor_page == 4) lv_obj_clear_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
-              } else {
-                drag_page = id(touch_drag_page);
-                drag_dir = id(touch_drag_dir);
-                neighbor_page = drag_page + drag_dir;
-              }
-              if (id(touch_last_render_ms) != 0 && now - id(touch_last_render_ms) < 16) {
-                return;
-              }
-              id(touch_last_render_ms) = now;
-              page_dx = dx < -800 ? -800 : (dx > 800 ? 800 : dx);
-              if (drag_dir == 1 && page_dx > 0) {
-                page_dx = 0;
-              } else if (drag_dir == -1 && page_dx < 0) {
-                page_dx = 0;
-              }
-              const int neighbor_x = (drag_dir * 800) + page_dx;
-              if (drag_page == 1) lv_obj_set_x(id(controls_root_1), page_dx);
-              if (drag_page == 2) lv_obj_set_x(id(controls_root_2), page_dx);
-              if (drag_page == 3) lv_obj_set_x(id(controls_root_3), page_dx);
-              if (drag_page == 4) lv_obj_set_x(id(controls_root_4), page_dx);
-              if (neighbor_page == 1) lv_obj_set_x(id(controls_root_1), neighbor_x);
-              if (neighbor_page == 2) lv_obj_set_x(id(controls_root_2), neighbor_x);
-              if (neighbor_page == 3) lv_obj_set_x(id(controls_root_3), neighbor_x);
-              if (neighbor_page == 4) lv_obj_set_x(id(controls_root_4), neighbor_x);
-              log_slow_update("tile_swipe");
-            } else if (player_close_drag) {
-              if (!id(touch_dragging)) {
-                id(touch_dragging) = true;
-                lv_indev_wait_release(lv_indev_active());
-              }
-              if (id(touch_last_render_ms) != 0 && now - id(touch_last_render_ms) < 16) {
-                return;
-              }
-              id(touch_last_render_ms) = now;
-              lv_obj_set_y(id(wear_root), dy);
-              log_slow_update("player_close");
-            } else if (settings_close_drag) {
-              if (!id(touch_dragging)) {
-                id(touch_dragging) = true;
-                lv_indev_wait_release(lv_indev_active());
-              }
-              if (id(touch_last_render_ms) != 0 && now - id(touch_last_render_ms) < 16) {
-                return;
-              }
-              id(touch_last_render_ms) = now;
-              lv_obj_set_y(id(settings_root), dy);
-              log_slow_update("settings_close");
+            if (!id(tile_swipe_dragging) && (abs_dx <= 24 || abs_dx <= abs_dy)) {
+              return;
             }
+
+            constexpr int width = 800;
+            constexpr int commit_x = width / 4;
+            int next_page = id(tile_swipe_next_page);
+            int next_x = id(tile_swipe_next_x);
+            int page_dx = dx;
+            if (page_dx < -width) page_dx = -width;
+            if (page_dx > width) page_dx = width;
+
+            if (!id(tile_swipe_dragging)) {
+              const int dir = page_dx < 0 ? 1 : -1;
+              next_page = page + dir;
+              if (next_page < 1 || next_page > 4) {
+                return;
+              }
+              next_x = dir > 0 ? width : -width;
+
+              lv_obj_t *current = nullptr;
+              lv_obj_t *next = nullptr;
+              switch (page) {
+                case 1: current = id(controls_root_1); break;
+                case 2: current = id(controls_root_2); break;
+                case 3: current = id(controls_root_3); break;
+                case 4: current = id(controls_root_4); break;
+              }
+              switch (next_page) {
+                case 1: next = id(controls_root_1); break;
+                case 2: next = id(controls_root_2); break;
+                case 3: next = id(controls_root_3); break;
+                case 4: next = id(controls_root_4); break;
+              }
+              if (current == nullptr || next == nullptr) {
+                return;
+              }
+
+              lv_indev_wait_release(lv_indev_active());
+              lvgl_esphome_snapshot_cache_pair(current, next, width);
+              if (!lvgl_esphome_snapshot_swipe_begin(current, next, width, next_x)) {
+                return;
+              }
+
+              id(tile_swipe_dragging) = true;
+              id(tile_swipe_next_page) = next_page;
+              id(tile_swipe_next_x) = next_x;
+              if (id(settings_swipe_logs_switch).state) {
+                ESP_LOGI("touch.snapshot", "begin page=%d next=%d next_x=%d", page, next_page, next_x);
+              }
+            }
+
+            if (id(tile_swipe_last_render_ms) != 0 && millis() - id(tile_swipe_last_render_ms) < 12) {
+              return;
+            }
+            id(tile_swipe_last_render_ms) = millis();
+
+            if (next_x > 0 && page_dx > 0) page_dx = 0;
+            if (next_x < 0 && page_dx < 0) page_dx = 0;
+            if (abs(page_dx) >= commit_x) {
+              id(tile_swipe_commit_latched) = true;
+            }
+            lvgl_esphome_snapshot_swipe_update(page_dx, next_x + page_dx);
     on_release:
       then:
         - lambda: |-
-            const uint32_t perf_start_us = micros();
-            if (!id(touch_tracking)) {
-              if (id(settings_swipe_logs_switch).state) {
-                ESP_LOGI("touch.debug", "touch release without active tracking");
-              }
+            if (!id(tile_swipe_tracking)) {
               return;
             }
-            id(touch_tracking) = false;
-
-            const int dx = id(touch_last_x) - id(touch_start_x);
-            const int dy = id(touch_last_y) - id(touch_start_y);
+            id(tile_swipe_tracking) = false;
+            const int page = id(tile_swipe_page);
+            const int next_page = id(tile_swipe_next_page);
+            const int next_x = id(tile_swipe_next_x);
+            const int dx = id(tile_swipe_last_x) - id(tile_swipe_start_x);
+            const int dy = id(tile_swipe_last_y) - id(tile_swipe_start_y);
             const int abs_dx = abs(dx);
             const int abs_dy = abs(dy);
-            constexpr int commit_x = 200;
-            constexpr int commit_y = 200;
-            constexpr uint32_t swipe_cooldown_ms = 650;
-            const uint32_t now = millis();
+            constexpr int width = 800;
+            constexpr int commit_x = width / 4;
 
-            const int release_drag_dir = id(touch_drag_dir);
-            const bool committed_horizontal_drag =
-                (release_drag_dir == 1 && dx < -commit_x) ||
-                (release_drag_dir == -1 && dx > commit_x);
-            bool changed_page = false;
-            bool ran_tile_cleanup = false;
+            if (id(tile_swipe_dragging) && next_page >= 1 && next_page <= 4) {
+              const bool commit = id(tile_swipe_commit_latched) || (abs_dx >= commit_x && abs_dx > abs_dy);
+              const int final_current_x = commit ? (next_x > 0 ? -width : width) : 0;
+              const int final_next_x = commit ? 0 : next_x;
 
-            auto cleanup_tile_drag = [&]() {
-              if (ran_tile_cleanup) return;
-              ran_tile_cleanup = true;
-              const int offset = id(ui_page) >= 1 && id(ui_page) <= 4 ? -((id(ui_page) - 1) * 800) : 0;
-              lv_obj_set_x(id(controls_root_1), offset);
-              lv_obj_set_x(id(controls_root_2), offset + 800);
-              lv_obj_set_x(id(controls_root_3), offset + 1600);
-              lv_obj_set_x(id(controls_root_4), offset + 2400);
-              lv_obj_add_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
-              lv_obj_add_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
-              lv_obj_add_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
-              lv_obj_add_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
-              if (id(ui_page) == 1) lv_obj_clear_flag(id(controls_root_1), LV_OBJ_FLAG_HIDDEN);
-              if (id(ui_page) == 2) lv_obj_clear_flag(id(controls_root_2), LV_OBJ_FLAG_HIDDEN);
-              if (id(ui_page) == 3) lv_obj_clear_flag(id(controls_root_3), LV_OBJ_FLAG_HIDDEN);
-              if (id(ui_page) == 4) lv_obj_clear_flag(id(controls_root_4), LV_OBJ_FLAG_HIDDEN);
-            };
-
-            if (!id(touch_swipe_committed) && id(touch_dragging) && id(ui_page) >= 1 && id(ui_page) <= 4 &&
-                now - id(touch_last_page_swipe_ms) > swipe_cooldown_ms && committed_horizontal_drag && abs_dx > abs_dy) {
-              id(touch_swipe_committed) = true;
-              id(touch_last_page_swipe_ms) = now;
-              changed_page = true;
-              id(ui_page) = id(ui_page) + release_drag_dir;
-              cleanup_tile_drag();
-            } else if (id(touch_dragging) && id(ui_page) == 0 && dy < -commit_y && abs_dy > abs_dx) {
-              id(ui_show_tiles_1_from_player).execute();
-            } else if (false && id(touch_dragging) && id(ui_page) == 5 && dy < -commit_y && abs_dy > abs_dx) {
-              id(ui_show_tiles_1_from_settings).execute();
+              lvgl_esphome_snapshot_swipe_finish(final_current_x, final_next_x, 130, commit);
+              id(ui_page) = commit ? next_page : page;
+              id(ui_apply_tile_visibility).execute();
+              if (id(settings_swipe_logs_switch).state) {
+                ESP_LOGI("touch.snapshot", "finish page=%d next=%d commit=%d latched=%d dx=%d",
+                         page, next_page, commit, id(tile_swipe_commit_latched), dx);
+              }
             } else {
-              if (id(ui_page) == 0) {
-                lv_obj_set_y(id(wear_root), 0);
-              }
-              if (id(touch_dragging) && id(touch_drag_page) >= 1 && id(touch_drag_page) <= 4) {
-                cleanup_tile_drag();
-              }
+              lvgl_esphome_snapshot_swipe_end();
             }
 
-            if (id(settings_perf_logs_switch).state) {
-              const uint32_t elapsed_us = micros() - perf_start_us;
-              if (elapsed_us >= 3000) {
-                ESP_LOGW("touch.perf", "release page=%d dx=%d dy=%d elapsed=%uus drag=%d tile_cleanup=%d",
-                         id(ui_page), dx, dy, elapsed_us, id(touch_dragging), ran_tile_cleanup);
-              }
-            }
-
-            id(touch_dragging) = false;
-            id(touch_drag_page) = 0;
-            id(touch_drag_dir) = 0;
+            id(tile_swipe_dragging) = false;
+            id(tile_swipe_page) = 0;
+            id(tile_swipe_next_page) = 0;
+            id(tile_swipe_next_x) = 0;
+            id(tile_swipe_commit_latched) = false;
+            id(tile_swipe_last_render_ms) = 0;

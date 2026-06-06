@@ -7,7 +7,9 @@ lvgl:
     - my_touchscreen
   update_interval: ${display_update_interval}
   buffer_size: ${display_buffer_size}
-  direct_mode: true
+  draw_rounding: ${display_draw_rounding}
+  direct_mode: false
+  full_refresh: false
   byte_order: ${display_byte_order}
   bg_color: 0x05070C
   fps_benchmark: true
