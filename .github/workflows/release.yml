@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  ESPHOME_VERSION: 2026.5.1
+  ESPHOME_PIP_SPEC: git+https://github.com/esphome/esphome.git@dev
   DEVICE_NAME: atmosfera-echo-hub
   YAML_FILE: atmosfera-echo-hub.factory.yaml
 
@@ -62,7 +62,7 @@ jobs:
             ${{ runner.os }}-pio-
 
       - name: Install ESPHome
-        run: pip install "esphome==${ESPHOME_VERSION}"
+        run: pip install "${ESPHOME_PIP_SPEC}"
 
       - name: Provide CI-only secrets
         run: |

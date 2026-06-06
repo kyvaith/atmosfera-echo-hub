@@ -8,6 +8,7 @@ substitutions:
   friendly_name: "Atmosfera Echo Hub"
   project_namespace: kyvaith
   firmware_version: dev
+  esphome_min_version: 2026.6.0-dev
 
   # Home Assistant entities used by the default tile pages
   tile_light_entity: light.living_room

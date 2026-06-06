@@ -3,6 +3,7 @@
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
+  min_version: ${esphome_min_version}
   includes:
     - <esp_heap_caps.h>
     - <esp_psram.h>
