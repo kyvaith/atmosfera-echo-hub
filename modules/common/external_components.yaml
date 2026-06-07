@@ -1,5 +1,6 @@
 # External components used by Atmosfera Echo Hub.
-# mipi_dsi and LVGL come from project forks; artwork_image comes from the media player project.
+# Patched ESPHome components live in the project ESPHome fork.
+# artwork_image comes from the media player project.
 external_components:
   - source:
       type: local
@@ -8,16 +9,9 @@ external_components:
   - source:
       type: git
       url: https://github.com/kyvaith/esphome
-      ref: mipi-dsi-dma2d-direct-flush-support
+      ref: dev
       path: esphome/components
-    components: [mipi_dsi]
-    refresh: always
-  - source:
-      type: git
-      url: https://github.com/kyvaith/lvgl_9.5
-      ref: main
-      path: components
-    components: [lvgl, image, font]
+    components: [mipi_dsi, lvgl, image]
     refresh: always
   - source: github://jtenniswood/esphome-media-player@main
     components: [artwork_image]
