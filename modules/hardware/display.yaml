@@ -33,6 +33,7 @@ display:
     draw_rounding: ${display_draw_rounding}
     pclk_frequency: ${display_pclk_frequency}
     lane_bit_rate: ${display_lane_bit_rate}
+    use_dma2d: true
     async_lvgl_flush: true
     hsync_back_porch: ${display_hsync_back_porch}
     hsync_pulse_width: ${display_hsync_pulse_width}
