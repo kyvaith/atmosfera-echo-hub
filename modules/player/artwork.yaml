@@ -4,22 +4,22 @@ image:
   - file: "https://raw.githubusercontent.com/jtenniswood/esphome-media-player/main/common/assets/placeholder.png"
     id: album_art_placeholder
     type: RGB565
-    byte_order: ${image_byte_order}
+    byte_order: little_endian
 
 http_request:
   id: http_req
-  verify_ssl: ${ha_verify_ssl}
+  verify_ssl: true
 
 artwork_image:
-  - url: "https://placehold.co/${artwork_size}x${artwork_size}/2d2d2d/555555.jpg"
+  - url: "https://placehold.co/800x800/2d2d2d/555555.jpg"
     id: album_art_background
     format: AUTO
     type: RGB565
-    byte_order: ${image_byte_order}
+    byte_order: little_endian
     placeholder: album_art_placeholder
-    resize: ${artwork_size}x${artwork_size}
-    buffer_size: ${artwork_image_buffer_size}
-    allow_insecure_local_urls: ${allow_insecure_local_artwork}
+    resize: 800x800
+    buffer_size: 65536
+    allow_insecure_local_urls: true
     on_download_finished:
       - script.execute: media_apply_artwork
     on_error:

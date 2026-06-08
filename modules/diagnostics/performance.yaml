@@ -3,30 +3,32 @@
 interval:
   - interval: 1s
     then:
-      - lvgl.label.update:
-          id:
-            - perf_overlay_label
-          text: !lambda |-
-            if (!id(settings_perf_overlay_switch).state) {
-              lv_obj_add_flag(id(perf_overlay_label), LV_OBJ_FLAG_HIDDEN);
-              return std::string("");
-            }
-            lv_obj_clear_flag(id(perf_overlay_label), LV_OBJ_FLAG_HIDDEN);
-            lv_obj_move_foreground(id(perf_overlay_label));
-            const uint32_t fps = lvgl_esphome_get_fps();
-            char fps_buf[8];
-            if (fps == 0) {
-              snprintf(fps_buf, sizeof(fps_buf), "--");
-            } else {
-              snprintf(fps_buf, sizeof(fps_buf), "%lu", (unsigned long) fps);
-            }
-            char buf[76];
-            snprintf(buf, sizeof(buf), "FPS %s CPU %lu%% FL %lu/%lums L%lums I%luk D%lu",
-                     fps_buf,
-                     (unsigned long) lvgl_esphome_get_cpu_pct(),
-                     (unsigned long) lvgl_esphome_get_flush_ms(),
-                     (unsigned long) lvgl_esphome_get_flush_max_ms(),
-                     (unsigned long) lvgl_esphome_get_loop_max_ms(),
-                     (unsigned long) lvgl_esphome_get_invalidated_kpx(),
-                     (unsigned long) lvgl_esphome_get_direct_mode_active());
-            return std::string(buf);
+      - if:
+          condition:
+            switch.is_on: settings_perf_overlay_switch
+          then:
+            - lvgl.label.update:
+                id: perf_overlay_label
+                text: !lambda |-
+                  const uint32_t fps = lvgl_esphome_get_fps();
+                  char fps_buf[8];
+                  if (fps == 0) {
+                    snprintf(fps_buf, sizeof(fps_buf), "--");
+                  } else {
+                    snprintf(fps_buf, sizeof(fps_buf), "%lu", (unsigned long) fps);
+                  }
+                  char buf[76];
+                  snprintf(buf, sizeof(buf), "FPS %s CPU %lu%% FL %lu/%lums L%lums I%luk D%lu",
+                           fps_buf,
+                           (unsigned long) lvgl_esphome_get_cpu_pct(),
+                           (unsigned long) lvgl_esphome_get_flush_ms(),
+                           (unsigned long) lvgl_esphome_get_flush_max_ms(),
+                           (unsigned long) lvgl_esphome_get_loop_max_ms(),
+                           (unsigned long) lvgl_esphome_get_invalidated_kpx(),
+                           (unsigned long) lvgl_esphome_get_direct_mode_active());
+                  return std::string(buf);
+            - lvgl.widget.show: perf_overlay_label
+            - lambda: |-
+                if (id(perf_overlay_label) != nullptr) {
+                  lv_obj_move_foreground(id(perf_overlay_label));
+                }

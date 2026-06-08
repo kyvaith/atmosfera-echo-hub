@@ -61,9 +61,11 @@ script:
   - id: open_speaker_group_panel
     mode: restart
     then:
+      - globals.set:
+          id: media_speaker_panel_open
+          value: 'true'
+      - lvgl.widget.show: speaker_group_panel
       - lambda: |-
-          id(media_speaker_panel_open) = true;
-          lv_obj_clear_flag(id(speaker_group_panel), LV_OBJ_FLAG_HIDDEN);
           lv_obj_move_foreground(id(speaker_group_panel));
       - script.execute: parse_speakers
       - script.execute: update_group_state
@@ -71,9 +73,10 @@ script:
   - id: close_speaker_group_panel
     mode: restart
     then:
-      - lambda: |-
-          id(media_speaker_panel_open) = false;
-          lv_obj_add_flag(id(speaker_group_panel), LV_OBJ_FLAG_HIDDEN);
+      - globals.set:
+          id: media_speaker_panel_open
+          value: 'false'
+      - lvgl.widget.hide: speaker_group_panel
 
   - id: subscribe_speaker_group_sensor
     mode: restart
@@ -83,7 +86,7 @@ script:
 
           std::string entity = id(speaker_group_entity).state;
           if (entity.empty()) {
-            entity = "${speaker_group_sensor}";
+            entity = "sensor.speaker_group";
             auto call = id(speaker_group_entity).make_call();
             call.set_value(entity);
             call.perform();

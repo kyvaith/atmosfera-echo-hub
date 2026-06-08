@@ -735,7 +735,11 @@ lvgl:
                         text_font: roboto_18
                   on_click:
                     then:
-                      - script.execute: ui_show_player
+                      - script.execute: ui_prepare_player_page
+                      - lvgl.page.show:
+                          id: music_page
+                          animation: MOVE_BOTTOM
+                          time: 250ms
               - button:
                   id: tile_subpage_button
                   x: 414
@@ -1001,7 +1005,11 @@ lvgl:
                         text_font: roboto_18
                   on_click:
                     then:
-                      - script.execute: ui_show_settings
+                      - script.execute: ui_prepare_settings_page
+                      - lvgl.page.show:
+                          id: settings_page
+                          animation: MOVE_BOTTOM
+                          time: 220ms
               - button:
                   id: tile_voice_button
                   x: 414
@@ -1036,10 +1044,9 @@ lvgl:
                     then:
                       - if:
                           condition:
-                            and:
-                              - lambda: return ${xmos_microphone_enabled};
-                              - switch.is_off: voice_assistant_mute_switch
+                            switch.is_off: voice_assistant_mute_switch
                           then:
+                            - micro_wake_word.stop:
                             - lambda: |-
                                 id(voice_assistant_phase) = ${voice_assist_waiting_phase_id};
                                 id(voice_assistant_request_text).publish_state("");
@@ -1051,7 +1058,7 @@ lvgl:
                             - lambda: |-
                                 id(voice_assistant_phase) = ${voice_assist_error_phase_id};
                                 id(voice_assistant_request_text).publish_state("");
-                                id(voice_assistant_response_text).publish_state("Microphone disabled");
+                                id(voice_assistant_response_text).publish_state("Microphone muted");
                             - script.execute: display_wake
                             - script.execute: voice_assistant_update_overlay
               - label:

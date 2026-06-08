@@ -8,7 +8,7 @@ esphome:
       - if:
           condition:
             lambda: |-
-              return ${lvgl_profiler_auto_run};
+              return false;
           then:
             - delay: 7s
             - script.execute: lvgl_profiler_profile_settings_scroll
@@ -20,7 +20,7 @@ script:
       - logger.set_level: INFO
       - lambda: |-
           ESP_LOGI("lvgl.prof", "PROFILE_BEGIN settings_scroll rgb888 ppa=%s ppa_img=%s lane=%s pclk=%s",
-                   "${lvgl_use_ppa}", "${lvgl_use_ppa_img}", "${display_lane_bit_rate}", "${display_pclk_frequency}");
+                   "true", "true", "1.5Gbps", "48MHz");
           ESP_LOGI("lvgl.prof", "Manual profiler active for a short controlled settings scroll.");
           lvgl_esphome_set_perf_logging_enabled(true);
       - script.execute: ui_show_settings

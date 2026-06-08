@@ -3,15 +3,11 @@
 # artwork_image comes from the media player project.
 external_components:
   - source:
-      type: local
-      path: components
-    components: [xmos]
-  - source:
       type: git
       url: https://github.com/kyvaith/esphome
-      ref: upstream-pr-integration-test
+      ref: dev
       path: esphome/components
-    components: [mipi_dsi, lvgl, image]
+    components: [mipi_dsi, lvgl, image, es7210]
     refresh: always
   - source: github://jtenniswood/esphome-media-player@main
     components: [artwork_image]

@@ -1,5 +1,5 @@
 # Atmosfera Echo Hub ESPHome configuration.
-# Keep this file as the readable entry point: identity, key tunables and package wiring only.
+# Keep this file as the readable entry point: identity, user-facing defaults and package wiring only.
 
 substitutions:
   # Device identity
@@ -10,7 +10,18 @@ substitutions:
   firmware_version: dev
   esphome_min_version: 2026.6.0-dev
 
-  # Home Assistant entities used by the default tile pages
+  # Firmware update and dashboard import endpoints
+  firmware_manifest_url: "https://kyvaith.github.io/Atmosfera-Echo-Hub/manifest.json"
+  firmware_manifest_beta_url: "https://kyvaith.github.io/Atmosfera-Echo-Hub/manifest-beta.json"
+  dashboard_import_url: github://kyvaith/Atmosfera-Echo-Hub/atmosfera-echo-hub.yaml@main
+
+  # Voice Assistant defaults exposed through device settings
+  voice_language_default: en-US
+  voice_region_default: auto
+  wake_word_default: okay_nabu
+  voice_assistant_default: home_assistant
+
+  # Home Assistant entities used as initial values for runtime-configurable tiles
   tile_light_entity: light.living_room
   tile_switch_entity: switch.living_room
   tile_scene_entity: scene.relax
@@ -22,63 +33,6 @@ substitutions:
   tile_media_entity: media_player.music_assistant
   tile_fan_entity: fan.living_room
   tile_alarm_entity: alarm_control_panel.home
-  speaker_group_sensor: sensor.speaker_group
-
-  # Home Assistant artwork download behavior
-  ha_verify_ssl: "true"
-  allow_insecure_local_artwork: "true"
-  firmware_manifest_url: "https://kyvaith.github.io/atmosfera-echo-hub/manifest.json"
-  firmware_manifest_beta_url: "https://kyvaith.github.io/atmosfera-echo-hub/manifest-beta.json"
-  dashboard_import_url: github://kyvaith/atmosfera-echo-hub/atmosfera-echo-hub.yaml@main
-
-  # Display and touch tuning
-  display_width: "800"
-  display_height: "800"
-  display_brightness_default: "85"
-  display_timeout_default: "60"
-  display_update_interval: 10ms
-  display_buffer_size: 3%
-  display_draw_rounding: "4"
-  display_byte_order: little_endian
-  display_pclk_frequency: 48MHz
-  display_lane_bit_rate: 1.5Gbps
-  display_hsync_back_porch: "40"
-  display_hsync_pulse_width: "6"
-  display_hsync_front_porch: "120"
-  display_vsync_back_porch: "12"
-  display_vsync_pulse_width: "4"
-  display_vsync_front_porch: "16"
-  lvgl_use_ppa: "true"
-  lvgl_use_ppa_img: "true"
-  lvgl_profiler_enabled: "false"
-  lvgl_profiler_auto_run: "false"
-  touch_update_interval: 16ms
-  backlight_pwm_frequency: 20000Hz
-  # The current backlight circuit drops out below the old ~70% UI level.
-  # With max_power=80%, that maps to roughly 56% PWM before output inversion.
-  backlight_min_power: 56%
-  backlight_max_power: 80%
-
-  # Artwork and playback behavior
-  image_byte_order: little_endian
-  artwork_size: "800"
-  artwork_image_buffer_size: "65536"
-  playback_progress_bar_range: "100"
-  playback_refresh_interval: 1s
-  track_info_duration_default: "5"
-  voice_language_default: en-US
-  voice_region_default: auto
-  wake_word_default: hey_home_free
-  voice_assistant_default: home_assistant
-  # Keep the XMOS microphone disabled until the physical module is connected.
-  xmos_microphone_enabled: "false"
-
-  # Dedicated XMOS microphone bus. Keep it separate from the ES8311/SendSpin bus
-  # so wake word detection can run while local audio is playing.
-  xmos_i2s_mclk_pin: GPIO22
-  xmos_i2s_bclk_pin: GPIO21
-  xmos_i2s_lrclk_pin: GPIO20
-  xmos_i2s_din_pin: GPIO23
 
 packages:
   external_components: !include modules/common/external_components.yaml

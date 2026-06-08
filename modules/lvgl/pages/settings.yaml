@@ -17,9 +17,6 @@ lvgl:
             pad_all: 0
             scrollable: true
             scrollbar_mode: "off"
-            on_scroll:
-              then:
-                - script.execute: ui_cull_settings_rows
             widgets:
               - label:
                   text: "Settings"
@@ -83,7 +80,6 @@ lvgl:
                   on_click:
                     then:
                       - switch.turn_on: settings_true_colour_switch
-                      - script.execute: ui_apply_settings_state
               - button:
                   id: settings_screen_tone_button
                   x: 104
@@ -118,7 +114,6 @@ lvgl:
                   on_click:
                     then:
                       - switch.toggle: settings_screen_tone_switch
-                      - script.execute: ui_apply_settings_state
               - button:
                   id: settings_perf_overlay_button
                   x: 104
@@ -153,7 +148,6 @@ lvgl:
                   on_click:
                     then:
                       - switch.toggle: settings_perf_overlay_switch
-                      - script.execute: ui_apply_settings_state
               - button:
                   id: settings_system_logs_button
                   x: 104
@@ -188,7 +182,6 @@ lvgl:
                   on_click:
                     then:
                       - switch.toggle: settings_system_logs_switch
-                      - script.execute: ui_apply_settings_state
               - button:
                   id: settings_perf_logs_button
                   x: 104
@@ -223,7 +216,6 @@ lvgl:
                   on_click:
                     then:
                       - switch.toggle: settings_perf_logs_switch
-                      - script.execute: ui_apply_settings_state
               - button:
                   id: settings_swipe_logs_button
                   x: 104
@@ -258,7 +250,6 @@ lvgl:
                   on_click:
                     then:
                       - switch.toggle: settings_swipe_logs_switch
-                      - script.execute: ui_apply_settings_state
               - button:
                   id: settings_beta_firmware_button
                   x: 104
@@ -293,7 +284,6 @@ lvgl:
                   on_click:
                     then:
                       - switch.toggle: settings_beta_firmware_switch
-                      - script.execute: ui_apply_settings_state
               - button:
                   id: settings_display_brightness_button
                   x: 104
@@ -373,7 +363,6 @@ lvgl:
                             if (value < 120.0f) return 120.0f;
                             if (value < 300.0f) return 300.0f;
                             return 0.0f;
-                      - script.execute: ui_apply_settings_state
               - button:
                   id: settings_voice_mute_button
                   x: 104
@@ -408,7 +397,6 @@ lvgl:
                   on_click:
                     then:
                       - switch.toggle: voice_assistant_mute_switch
-                      - script.execute: ui_apply_settings_state
               - button:
                   id: settings_wake_sound_button
                   x: 104
@@ -443,7 +431,6 @@ lvgl:
                   on_click:
                     then:
                       - switch.toggle: voice_assistant_wake_sound_switch
-                      - script.execute: ui_apply_settings_state
               - button:
                   id: settings_wake_sensitivity_button
                   x: 104
@@ -482,7 +469,6 @@ lvgl:
                       - select.next:
                           id: mww_sensitivity_select
                           cycle: true
-                      - script.execute: ui_apply_settings_state
               - label:
                   text: ""
                   align: BOTTOM_MID
@@ -491,7 +477,7 @@ lvgl:
                   text_align: CENTER
                   text_color: 0xAEB4C2
                   text_font: roboto_16
-              # Keeps the scroll extent stable while off-screen setting rows are culled.
+              # Keeps comfortable bottom padding for the round viewport.
               - obj:
                   id: settings_scroll_spacer
                   x: 0
@@ -525,7 +511,11 @@ lvgl:
                   text_font: material_symbols_24
             on_click:
               then:
-                - script.execute: ui_show_tiles_1_from_settings
+                - script.execute: ui_show_tiles_1
+                - lvgl.page.show:
+                    id: controls_page
+                    animation: MOVE_TOP
+                    time: 180ms
         - obj:
             id: screen_tone_overlay_settings
             x: 0

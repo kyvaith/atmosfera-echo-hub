@@ -6,13 +6,11 @@ touchscreen:
     id: my_touchscreen
     i2c_id: touchscreen_bus
     display: my_display
-    update_interval: ${touch_update_interval}
+    update_interval: 16ms
     on_touch:
       then:
         - lambda: |-
-            const uint32_t now = millis();
-            id(display_last_interaction_ms) = now;
-            if (id(boot_sequence_done) && !id(display_awake)) {
+            if (id(boot_sequence_done) && !id(display_backlight).current_values.is_on()) {
               id(display_wake).execute();
             }
 
@@ -45,17 +43,64 @@ touchscreen:
             const int dx = id(tile_swipe_last_x) - id(tile_swipe_start_x);
             const int dy = id(tile_swipe_last_y) - id(tile_swipe_start_y);
             constexpr int width = 800;
+            constexpr int start_x = 10;
             constexpr int commit_x = width / 4;
-            if (abs(dx) < commit_x || abs(dx) <= abs(dy)) return;
+            constexpr uint32_t render_interval_ms = 8;
 
-            const int dir = dx < 0 ? 1 : -1;
-            const int next_page = page + dir;
-            if (next_page < 1 || next_page > 4) return;
+            auto page_root = [&](int p) -> lv_obj_t * {
+              switch (p) {
+                case 1: return id(controls_root_1);
+                case 2: return id(controls_root_2);
+                case 3: return id(controls_root_3);
+                case 4: return id(controls_root_4);
+                default: return nullptr;
+              }
+            };
+            auto clamp_i = [](int value, int lo, int hi) -> int {
+              if (value < lo) return lo;
+              if (value > hi) return hi;
+              return value;
+            };
 
-            id(tile_swipe_dragging) = true;
-            id(tile_swipe_next_page) = next_page;
-            id(tile_swipe_next_x) = dir > 0 ? width : -width;
-            id(tile_swipe_commit_latched) = true;
+            if (!id(tile_swipe_dragging)) {
+              if (abs(dx) < start_x || abs(dx) <= abs(dy) + 8) return;
+
+              const int dir = dx < 0 ? 1 : -1;
+              const int next_page = page + dir;
+              if (next_page < 1 || next_page > 4) return;
+
+              const int next_x = dir > 0 ? width : -width;
+              if (!lvgl_esphome_snapshot_swipe_begin(page_root(page), page_root(next_page), width, next_x)) {
+                id(tile_swipe_tracking) = false;
+                return;
+              }
+              id(tile_swipe_dragging) = true;
+              id(tile_swipe_next_page) = next_page;
+              id(tile_swipe_next_x) = next_x;
+              id(tile_swipe_last_render_ms) = 0;
+            }
+
+            const int initial_next_x = id(tile_swipe_next_x);
+            if (initial_next_x == 0) return;
+            int current_x = dx;
+            if (initial_next_x > 0) {
+              current_x = clamp_i(current_x, -width, 0);
+            } else {
+              current_x = clamp_i(current_x, 0, width);
+            }
+            const int next_x = initial_next_x + current_x;
+
+            if (abs(dx) >= commit_x && abs(dx) > abs(dy)) {
+              id(tile_swipe_commit_latched) = true;
+            }
+
+            const uint32_t now = millis();
+            if (id(tile_swipe_last_render_ms) != 0 &&
+                now - id(tile_swipe_last_render_ms) < render_interval_ms) {
+              return;
+            }
+            id(tile_swipe_last_render_ms) = now;
+            lvgl_esphome_snapshot_swipe_update(current_x, next_x);
     on_release:
       then:
         - lambda: |-
@@ -72,18 +117,57 @@ touchscreen:
             constexpr int width = 800;
             constexpr int commit_x = width / 4;
 
+            auto clamp_i = [](int value, int lo, int hi) -> int {
+              if (value < lo) return lo;
+              if (value > hi) return hi;
+              return value;
+            };
+
             if (next_page < 1 || next_page > 4) {
               const int dir = dx < 0 ? 1 : -1;
               next_page = page + dir;
             }
 
             const bool commit =
+                id(tile_swipe_dragging) &&
                 (id(tile_swipe_commit_latched) || (abs_dx >= commit_x && abs_dx > abs_dy)) &&
                 next_page >= 1 && next_page <= 4;
 
+            if (id(tile_swipe_dragging) && id(tile_swipe_next_x) != 0) {
+              const int initial_next_x = id(tile_swipe_next_x);
+              int current_x = dx;
+              if (initial_next_x > 0) {
+                current_x = clamp_i(current_x, -width, 0);
+              } else {
+                current_x = clamp_i(current_x, 0, width);
+              }
+
+              const int target_current_x = commit ? -initial_next_x : 0;
+              const int target_next_x = commit ? 0 : initial_next_x;
+              const int distance = abs(target_current_x - current_x);
+              uint32_t duration_ms = 0;
+              if (distance > 8) {
+                duration_ms = (uint32_t) ((distance * 380) / width);
+                if (duration_ms < 140) duration_ms = 140;
+                if (duration_ms > 420) duration_ms = 420;
+              }
+              lvgl_esphome_snapshot_swipe_finish(target_current_x, target_next_x, duration_ms, commit);
+            } else {
+              lvgl_esphome_snapshot_swipe_end();
+            }
+
             if (commit) {
               id(ui_page) = next_page;
-              id(ui_apply_tile_visibility).execute();
+              if (next_page == 1) {
+                id(ui_set_tile_visibility_1).execute();
+              } else if (next_page == 2) {
+                id(ui_set_tile_visibility_2).execute();
+              } else if (next_page == 3) {
+                id(ui_set_tile_visibility_3).execute();
+              } else if (next_page == 4) {
+                id(ui_set_tile_visibility_4).execute();
+              }
+              id(ui_refresh_tile_snapshots).execute();
               if (id(settings_swipe_logs_switch).state) {
                 ESP_LOGI("touch.swipe", "page=%d next=%d latched=%d dx=%d",
                          page, next_page, id(tile_swipe_commit_latched), dx);

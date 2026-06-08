@@ -148,22 +148,26 @@ script:
     then:
       - lambda: |-
           id(is_track_info_hidden) = false;
-          lv_obj_clear_flag(id(title_label), LV_OBJ_FLAG_HIDDEN);
-          if (id(artist_has_content)) {
-            lv_obj_clear_flag(id(artist_label), LV_OBJ_FLAG_HIDDEN);
-          }
-          lv_obj_clear_flag(id(album_label), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_clear_flag(id(media_time_label), LV_OBJ_FLAG_HIDDEN);
+      - lvgl.widget.show:
+          - title_label
+          - album_label
+          - media_time_label
+      - if:
+          condition:
+            lambda: 'return id(artist_has_content);'
+          then:
+            - lvgl.widget.show: artist_label
 
   - id: hide_track_info
     mode: restart
     then:
       - lambda: |-
           id(is_track_info_hidden) = true;
-          lv_obj_add_flag(id(title_label), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(artist_label), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(album_label), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(media_time_label), LV_OBJ_FLAG_HIDDEN);
+      - lvgl.widget.hide:
+          - title_label
+          - artist_label
+          - album_label
+          - media_time_label
 
   - id: start_hide_track_info_timer
     mode: restart
@@ -197,14 +201,20 @@ script:
   - id: refresh_progress_bar_from_state
     mode: restart
     then:
+      - if:
+          condition:
+            lambda: 'return !id(show_progress_bar).state;'
+          then:
+            - lvgl.widget.hide: media_progress_bar
+            - lambda: |-
+                id(last_media_progress_percent) = -1;
+          else:
+            - lvgl.widget.show: media_progress_bar
       - lambda: |-
           if (!id(show_progress_bar).state) {
-            lv_obj_add_flag(id(media_progress_bar), LV_OBJ_FLAG_HIDDEN);
-            id(last_media_progress_percent) = -1;
             return;
           }
 
-          lv_obj_clear_flag(id(media_progress_bar), LV_OBJ_FLAG_HIDDEN);
           float dur = id(media_duration_sensor).has_state() ? id(media_duration_sensor).state : 0.0f;
           float pos = id(last_media_position);
           bool playing = id(media_player_state_sensor).has_state()
@@ -220,7 +230,7 @@ script:
           id(last_media_position) = pos;
           if (t.is_valid()) id(last_position_timestamp) = t.timestamp;
 
-          const int progress_range = ${playback_progress_bar_range};
+          const int progress_range = 100;
           int value = 0;
           if (dur > 0.0f) {
             value = (int)((pos / dur) * (float)progress_range + 0.5f);
@@ -262,8 +272,8 @@ script:
   - id: show_volume_overlay
     mode: restart
     then:
+      - lvgl.widget.show: volume_overlay
       - lambda: |-
-          lv_obj_clear_flag(id(volume_overlay), LV_OBJ_FLAG_HIDDEN);
           lv_obj_move_foreground(id(volume_overlay));
       - script.execute: volume_overlay_timeout
 
@@ -286,6 +296,26 @@ script:
           lv_arc_set_value(id(volume_arc), pct);
       - script.execute: show_volume_overlay
 
+  - id: media_show_lottie_visual
+    mode: restart
+    then:
+      - lvgl.widget.show: lottie_visual_zone
+      - lambda: |-
+          if (id(weather_animation) != nullptr) {
+            auto *ctx = static_cast<esphome::lvgl::LottieContext *>(lv_obj_get_user_data(id(weather_animation)));
+            esphome::lvgl::lottie_show(ctx, true);
+          }
+
+  - id: media_hide_lottie_visual
+    mode: restart
+    then:
+      - lambda: |-
+          if (id(weather_animation) != nullptr) {
+            auto *ctx = static_cast<esphome::lvgl::LottieContext *>(lv_obj_get_user_data(id(weather_animation)));
+            esphome::lvgl::lottie_hide(ctx);
+          }
+      - lvgl.widget.hide: lottie_visual_zone
+
   - id: media_apply_artwork
     mode: restart
     then:
@@ -294,8 +324,7 @@ script:
           src: album_art_background
       - lvgl.widget.show: album_art_background_widget
       - lvgl.widget.hide: artwork_error_label
-      - lambda: |-
-          lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
+      - script.execute: media_hide_lottie_visual
       - script.execute: start_hide_track_info_timer
 
   - id: media_handle_artwork_error
@@ -303,32 +332,49 @@ script:
     then:
       - lvgl.widget.hide: album_art_background_widget
       - lvgl.widget.show: artwork_error_label
-      - lambda: |-
-          if (id(ui_page) == 0) {
-            lv_obj_clear_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
-          }
+      - if:
+          condition:
+            lambda: 'return id(ui_page) == 0;'
+          then:
+            - script.execute: media_show_lottie_visual
 
 text_sensor:
   - platform: template
     id: media_title_sensor
     internal: true
     on_value:
-      - lambda: |-
-          if (x.empty()) return;
-          if (id(auto_show_track_info).state) id(show_track_info).execute();
-          lv_label_set_text(id(title_label), x.c_str());
-          if (id(title_received_once)) {
-            id(last_media_position) = 0.0f;
-            id(last_media_progress_percent) = -1;
-            id(ha_position_epoch) = 0;
-            auto t = id(ha_time).now();
-            if (t.is_valid()) id(last_position_timestamp) = t.timestamp;
-            lv_bar_set_value(id(media_progress_bar), 0, LV_ANIM_OFF);
-            id(refresh_progress_bar_from_state).execute();
-          } else {
-            id(title_received_once) = true;
-          }
-          id(start_hide_track_info_timer).execute();
+      - if:
+          condition:
+            lambda: 'return !x.empty();'
+          then:
+            - if:
+                condition:
+                  lambda: 'return id(auto_show_track_info).state;'
+                then:
+                  - script.execute: show_track_info
+            - lvgl.label.update:
+                id: title_label
+                text: !lambda 'return x;'
+            - lambda: |-
+                if (id(title_received_once)) {
+                  id(last_media_position) = 0.0f;
+                  id(last_media_progress_percent) = -1;
+                  id(ha_position_epoch) = 0;
+                  auto t = id(ha_time).now();
+                  if (t.is_valid()) id(last_position_timestamp) = t.timestamp;
+                  id(refresh_progress_bar_from_state).execute();
+                } else {
+                  id(title_received_once) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(title_received_once);'
+                then:
+                  - lvgl.bar.update:
+                      id: media_progress_bar
+                      value: 0
+                      animated: false
+            - script.execute: start_hide_track_info_timer
 
   - platform: template
     id: media_artist_sensor
@@ -336,13 +382,23 @@ text_sensor:
     on_value:
       - lambda: |-
           id(artist_has_content) = !x.empty() && x != "-";
-          if (id(artist_has_content)) {
-            lv_label_set_text(id(artist_label), x.c_str());
-            if (!id(is_track_info_hidden)) lv_obj_clear_flag(id(artist_label), LV_OBJ_FLAG_HIDDEN);
-          } else {
-            lv_label_set_text(id(artist_label), "-");
-            lv_obj_add_flag(id(artist_label), LV_OBJ_FLAG_HIDDEN);
-          }
+      - if:
+          condition:
+            lambda: 'return id(artist_has_content);'
+          then:
+            - lvgl.label.update:
+                id: artist_label
+                text: !lambda 'return x;'
+            - if:
+                condition:
+                  lambda: 'return !id(is_track_info_hidden);'
+                then:
+                  - lvgl.widget.show: artist_label
+          else:
+            - lvgl.label.update:
+                id: artist_label
+                text: "-"
+            - lvgl.widget.hide: artist_label
 
   - platform: template
     id: media_album_sensor
@@ -367,7 +423,7 @@ text_sensor:
           while (!path.empty() && (path.back() == '\n' || path.back() == '\r' || path.back() == ' ')) path.pop_back();
           std::string url = (path.rfind("http://", 0) == 0 || path.rfind("https://", 0) == 0)
               ? path : (id(ha_base_url) + path);
-          url = esphome::artwork_image::cap_artwork_url(url, ${artwork_size});
+          url = esphome::artwork_image::cap_artwork_url(url, 800);
           if (url == id(last_artwork_url)) return;
           id(last_artwork_url) = url;
           id(debounce_artwork_download).execute();
@@ -376,24 +432,42 @@ text_sensor:
     id: media_player_state_sensor
     internal: true
     on_value:
-      - lambda: |-
-          if (x == "playing") {
-            lv_label_set_text(id(play_icon_label), "\uE034");
-            lv_obj_clear_flag(id(play_button), LV_OBJ_FLAG_HIDDEN);
-            if (id(auto_show_track_info).state) id(show_track_info).execute();
-            id(start_hide_track_info_timer).execute();
-          } else if (x == "paused" || x == "idle" || x == "off" || x == "standby") {
-            lv_label_set_text(id(play_icon_label), "\uE037");
-            id(start_hide_track_info_timer).stop();
-            if (x == "idle" || x == "off" || x == "standby") {
-              id(last_media_position) = 0.0f;
-              id(ha_position_epoch) = 0;
-              id(last_position_timestamp) = 0;
-              id(last_media_progress_percent) = -1;
-              lv_bar_set_value(id(media_progress_bar), 0, LV_ANIM_OFF);
-            }
-          }
-          id(refresh_progress_bar_from_state).execute();
+      - if:
+          condition:
+            lambda: 'return x == "playing";'
+          then:
+            - lvgl.label.update:
+                id: play_icon_label
+                text: "\uE034"
+            - lvgl.widget.show: play_button
+            - if:
+                condition:
+                  lambda: 'return id(auto_show_track_info).state;'
+                then:
+                  - script.execute: show_track_info
+            - script.execute: start_hide_track_info_timer
+      - if:
+          condition:
+            lambda: 'return x == "paused" || x == "idle" || x == "off" || x == "standby";'
+          then:
+            - lvgl.label.update:
+                id: play_icon_label
+                text: "\uE037"
+            - script.stop: start_hide_track_info_timer
+      - if:
+          condition:
+            lambda: 'return x == "idle" || x == "off" || x == "standby";'
+          then:
+            - lambda: |-
+                id(last_media_position) = 0.0f;
+                id(ha_position_epoch) = 0;
+                id(last_position_timestamp) = 0;
+                id(last_media_progress_percent) = -1;
+            - lvgl.bar.update:
+                id: media_progress_bar
+                value: 0
+                animated: false
+      - script.execute: refresh_progress_bar_from_state
 
   - platform: template
     id: media_position_updated_at_sensor
@@ -482,7 +556,7 @@ sensor:
           }
 
 interval:
-  - interval: ${playback_refresh_interval}
+  - interval: 1s
     then:
       - if:
           condition:

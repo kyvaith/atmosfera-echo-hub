@@ -1,56 +1,44 @@
 # Boot splash shown while the UI finishes warming up.
 # The backlight is enabled only after this page is ready, so users see a polished fade-in.
+script:
+  - id: boot_show_esphome_animation
+    mode: restart
+    then:
+      - lambda: |-
+          if (id(boot_esphome_animation) != nullptr) {
+            auto *ctx = static_cast<esphome::lvgl::LottieContext *>(lv_obj_get_user_data(id(boot_esphome_animation)));
+            esphome::lvgl::lottie_show(ctx, true);
+          }
+
+  - id: boot_hide_esphome_animation
+    mode: restart
+    then:
+      - lambda: |-
+          if (id(boot_esphome_animation) != nullptr) {
+            auto *ctx = static_cast<esphome::lvgl::LottieContext *>(lv_obj_get_user_data(id(boot_esphome_animation)));
+            esphome::lvgl::lottie_hide(ctx);
+          }
+
 lvgl:
   pages:
     - id: boot_page
       bg_color: 0x05070C
       widgets:
-        - obj:
-            id: boot_root
-            width: 800
-            height: 800
+        - lottie:
+            id: boot_esphome_animation
+            file: "assets/animations/ESPHome.json"
+            width: 240
+            height: 305
             align: CENTER
-            bg_color: 0x05070C
-            border_width: 0
-            radius: 0
-            pad_all: 0
-            scrollable: false
-            widgets:
-              - obj:
-                  width: 760
-                  height: 760
-                  align: CENTER
-                  bg_color: 0x10131B
-                  border_width: 1
-                  border_color: 0x2A3344
-                  radius: 0
-                  pad_all: 0
-                  scrollable: false
-              - obj:
-                  id: boot_logo_shell
-                  width: 260
-                  height: 260
-                  align: CENTER
-                  bg_color: 0x10131B
-                  bg_opa: 100%
-                  border_width: 0
-                  radius: 130
-                  pad_all: 0
-                  scrollable: false
-                  widgets:
-                    - label:
-                        id: boot_logo_mark
-                        text: "AEH"
-                        width: 220
-                        align: CENTER
-                        text_align: CENTER
-                        text_color: 0xD0BCFF
-                        text_font: roboto_36
-              - label:
-                  text: "Atmosfera Echo Hub"
-                  align: CENTER
-                  y: 184
-                  width: 480
-                  text_align: CENTER
-                  text_color: 0xF4EFFA
-                  text_font: roboto_24
+            y: -64
+            loop: false
+            auto_start: true
+            hidden: true
+        - label:
+            text: "Atmosfera Echo Hub"
+            align: CENTER
+            y: 198
+            width: 480
+            text_align: CENTER
+            text_color: 0xF4EFFA
+            text_font: roboto_24

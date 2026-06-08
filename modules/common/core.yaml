@@ -12,55 +12,43 @@ esphome:
   on_boot:
     priority: 600
     then:
-      - switch.turn_on: pa_enable
-      - light.turn_off:
-          id: display_backlight
-      - lvgl.page.show:
-          id: boot_page
-      - script.execute: ui_apply_settings_state
-      - script.execute: log_memory_diagnostics
-      - delay: 250ms
-      - globals.set:
-          id: display_awake
-          value: 'true'
-      - globals.set:
-          id: display_last_interaction_ms
-          value: !lambda 'return millis();'
-      - light.turn_on:
-          id: display_backlight
-          brightness: !lambda 'return id(settings_display_brightness).state / 100.0f;'
-          transition_length: 2s
-      - delay: 4s
-      - script.execute: ui_show_tiles_1
-      - lvgl.page.show:
-          id: controls_page
-      - globals.set:
-          id: boot_sequence_done
-          value: 'true'
-      - globals.set:
-          id: display_awake
-          value: 'true'
-      - globals.set:
-          id: display_last_interaction_ms
-          value: !lambda 'return millis();'
-      - script.execute: ui_apply_settings_state
+    - light.turn_off:
+        id: display_backlight
+    - lvgl.page.show:
+        id: boot_page
+    - delay: 250ms
+    - light.turn_on:
+        id: display_backlight
+        brightness: !lambda 'return id(settings_display_brightness).state / 100.0f;'
+        transition_length: 2s
+    - delay: 1s
+    - script.execute: boot_show_esphome_animation
+    - delay: 6s
+    - script.execute: boot_hide_esphome_animation
+    - script.execute: ui_show_tiles_1
+    - lvgl.page.show:
+        id: controls_page
+    - globals.set:
+        id: boot_sequence_done
+        value: 'true'
+    - script.execute: ui_apply_settings_state
 
 ota:
-  - platform: esphome
+- platform: esphome
 
 api:
   homeassistant_states: true
   on_client_connected:
-    - lambda: |-
-        if (client_info.find("Home Assistant") != std::string::npos) {
-          id(ha_base_url) = client_address;
-        }
-    - script.execute: subscribe_media_player
-    - script.execute: subscribe_speaker_group_sensor
+  - lambda: |-
+      if (client_info.find("Home Assistant") != std::string::npos) {
+        id(ha_base_url) = client_address;
+      }
+  - script.execute: subscribe_media_player
+  - script.execute: subscribe_speaker_group_sensor
 
 time:
-  - platform: homeassistant
-    id: ha_time
+- platform: homeassistant
+  id: ha_time
 
 logger:
   hardware_uart: UART0
@@ -74,7 +62,6 @@ wifi:
   power_save_mode: none
 
 # Disable web_server first if audio streaming or SDIO stability regresses.
-
 web_server:
   port: 80
   version: 3

@@ -5,71 +5,19 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-  - id: display_awake
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: display_last_interaction_ms
-    type: uint32_t
-    restore_value: no
-    initial_value: '0'
 
 script:
-  - id: display_apply_brightness
-    mode: restart
-    then:
-      - if:
-          condition:
-            lambda: 'return id(boot_sequence_done) && id(display_awake);'
-          then:
-            - light.turn_on:
-                id: display_backlight
-                brightness: !lambda 'return id(settings_display_brightness).state / 100.0f;'
-                transition_length: 250ms
-
   - id: display_wake
     mode: restart
     then:
-      - globals.set:
-          id: display_last_interaction_ms
-          value: !lambda 'return millis();'
       - if:
           condition:
             lambda: 'return id(boot_sequence_done);'
           then:
-            - globals.set:
-                id: display_awake
-                value: 'true'
             - light.turn_on:
                 id: display_backlight
                 brightness: !lambda 'return id(settings_display_brightness).state / 100.0f;'
                 transition_length: 250ms
-
-  - id: display_sleep
-    mode: restart
-    then:
-      - if:
-          condition:
-            lambda: 'return id(boot_sequence_done) && id(display_awake);'
-          then:
-            - globals.set:
-                id: display_awake
-                value: 'false'
-            - light.turn_off:
-                id: display_backlight
-                transition_length: 500ms
-
-interval:
-  - interval: 1s
-    then:
-      - lambda: |-
-          if (!id(boot_sequence_done) || !id(display_awake)) return;
-          float timeout_s = id(settings_display_timeout).state;
-          if (timeout_s <= 0.0f) return;
-          const uint32_t elapsed = millis() - id(display_last_interaction_ms);
-          if (elapsed >= (uint32_t)(timeout_s * 1000.0f)) {
-            id(display_sleep).execute();
-          }
 
 switch:
   - platform: template
@@ -87,7 +35,7 @@ switch:
           format: "OTA updates set to beta channel"
       - lambda: 'id(firmware_update).set_source_url("${firmware_manifest_beta_url}");'
       - component.update: firmware_update
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_beta_firmware_state
     on_turn_off:
       - logger.log:
           level: INFO
@@ -95,35 +43,35 @@ switch:
           format: "OTA updates set to stable channel"
       - lambda: 'id(firmware_update).set_source_url("${firmware_manifest_url}");'
       - component.update: firmware_update
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_beta_firmware_state
   - platform: template
     id: settings_true_colour_switch
     name: "True Colour Mode"
     optimistic: true
     restore_mode: ALWAYS_ON
     on_turn_on:
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_true_colour_state
     on_turn_off:
       - switch.turn_on: settings_true_colour_switch
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_true_colour_state
   - platform: template
     id: settings_screen_tone_switch
     name: "Screen Tone"
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_screen_tone_state
     on_turn_off:
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_screen_tone_state
   - platform: template
     id: settings_perf_overlay_switch
     name: "Performance Overlay"
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_perf_overlay_state
     on_turn_off:
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_perf_overlay_state
   - platform: template
     id: settings_system_logs_switch
     name: "System Logs"
@@ -131,28 +79,28 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       - logger.set_level: INFO
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_system_logs_state
     on_turn_off:
       - logger.set_level: WARN
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_system_logs_state
   - platform: template
     id: settings_perf_logs_switch
     name: "Performance Logs"
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_perf_logs_state
     on_turn_off:
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_perf_logs_state
   - platform: template
     id: settings_swipe_logs_switch
     name: "Swipe Debug Logs"
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_swipe_logs_state
     on_turn_off:
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_swipe_logs_state
 
 number:
   - platform: template
@@ -161,7 +109,7 @@ number:
     min_value: 5
     max_value: 100
     step: 5
-    initial_value: ${display_brightness_default}
+    initial_value: 85
     optimistic: true
     restore_value: true
     unit_of_measurement: "%"
@@ -169,8 +117,17 @@ number:
     entity_category: config
     mode: slider
     on_value:
-      - script.execute: ui_apply_settings_state
-      - script.execute: display_apply_brightness
+      - script.execute: ui_update_display_brightness_state
+      - if:
+          condition:
+            and:
+              - lambda: 'return id(boot_sequence_done);'
+              - light.is_on: display_backlight
+          then:
+            - light.turn_on:
+                id: display_backlight
+                brightness: !lambda 'return id(settings_display_brightness).state / 100.0f;'
+                transition_length: 250ms
 
   - platform: template
     id: settings_display_timeout
@@ -178,7 +135,7 @@ number:
     min_value: 0
     max_value: 300
     step: 15
-    initial_value: ${display_timeout_default}
+    initial_value: 60
     optimistic: true
     restore_value: true
     unit_of_measurement: "s"
@@ -186,7 +143,7 @@ number:
     entity_category: config
     mode: box
     on_value:
-      - script.execute: ui_apply_settings_state
+      - script.execute: ui_update_display_timeout_state
 
 text:
   - platform: template
@@ -317,7 +274,7 @@ text:
     mode: text
     optimistic: true
     restore_value: true
-    initial_value: "${speaker_group_sensor}"
+    initial_value: "sensor.speaker_group"
     min_length: 0
     max_length: 120
     on_value:

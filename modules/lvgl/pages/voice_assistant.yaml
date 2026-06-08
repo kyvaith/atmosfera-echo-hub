@@ -128,17 +128,3 @@ lvgl:
                 text_color: 0xFFFFFF
                 text_font: roboto_24
                 long_mode: WRAP
-      - label:
-          id: perf_overlay_label
-          text: "FPS --  CPU --%"
-          align: BOTTOM_MID
-          y: -24
-          width: 520
-          text_align: CENTER
-          text_color: 0xF4EFFA
-          bg_color: 0x10131B
-          bg_opa: 100%
-          radius: 20
-          pad_left: 10
-          pad_right: 10
-          text_font: roboto_16

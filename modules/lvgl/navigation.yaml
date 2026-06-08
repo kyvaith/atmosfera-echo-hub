@@ -51,253 +51,362 @@ globals:
     initial_value: '0'
 
 script:
-  - id: ui_apply_tile_visibility
+  - id: ui_reset_tile_roots
     then:
-      - lambda: |-
-          auto show_active = [](lv_obj_t *obj, int page, int tile_page) {
-            if (obj == nullptr) return;
-            lv_obj_align(obj, LV_ALIGN_CENTER, 0, 0);
-            if (page == tile_page) {
-              lv_obj_clear_flag(obj, LV_OBJ_FLAG_HIDDEN);
-            } else {
-              lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
-            }
-          };
+      - lvgl.widget.update:
+          id:
+            - controls_root_1
+            - controls_root_2
+            - controls_root_3
+            - controls_root_4
+          align: CENTER
+          x: 0
+          y: 0
 
-          show_active(id(controls_root_1), id(ui_page), 1);
-          show_active(id(controls_root_2), id(ui_page), 2);
-          show_active(id(controls_root_3), id(ui_page), 3);
-          show_active(id(controls_root_4), id(ui_page), 4);
-
-  - id: ui_cull_settings_rows
+  - id: ui_set_tile_visibility_1
     then:
+      - script.execute: ui_reset_tile_roots
+      - lvgl.widget.show: controls_root_1
+      - lvgl.widget.hide:
+          - controls_root_2
+          - controls_root_3
+          - controls_root_4
+
+  - id: ui_set_tile_visibility_2
+    then:
+      - script.execute: ui_reset_tile_roots
+      - lvgl.widget.hide: controls_root_1
+      - lvgl.widget.show: controls_root_2
+      - lvgl.widget.hide:
+          - controls_root_3
+          - controls_root_4
+
+  - id: ui_set_tile_visibility_3
+    then:
+      - script.execute: ui_reset_tile_roots
+      - lvgl.widget.hide:
+          - controls_root_1
+          - controls_root_2
+      - lvgl.widget.show: controls_root_3
+      - lvgl.widget.hide: controls_root_4
+
+  - id: ui_set_tile_visibility_4
+    then:
+      - script.execute: ui_reset_tile_roots
+      - lvgl.widget.hide:
+          - controls_root_1
+          - controls_root_2
+          - controls_root_3
+      - lvgl.widget.show: controls_root_4
+
+  - id: ui_refresh_tile_snapshots
+    mode: restart
+    then:
+      - delay: 550ms
       - lambda: |-
-          if (id(settings_root) == nullptr) return;
-          const int scroll_y = lv_obj_get_scroll_y(id(settings_root));
-          constexpr int screen_h = 800;
-          constexpr int margin = 180;
-
-          auto cull_row = [&](lv_obj_t *obj) {
-            if (obj == nullptr) return;
-            const int y = lv_obj_get_y(obj) - scroll_y;
-            const int h = lv_obj_get_height(obj);
-            const bool visible = (y + h) >= -margin && y <= (screen_h + margin);
-            const bool hidden = lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN);
-            if (visible && hidden) {
-              lv_obj_clear_flag(obj, LV_OBJ_FLAG_HIDDEN);
-            } else if (!visible && !hidden) {
-              lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
-            }
-          };
-
-          cull_row(id(settings_true_colour_button));
-          cull_row(id(settings_screen_tone_button));
-          cull_row(id(settings_perf_overlay_button));
-          cull_row(id(settings_system_logs_button));
-          cull_row(id(settings_perf_logs_button));
-          cull_row(id(settings_swipe_logs_button));
-          cull_row(id(settings_beta_firmware_button));
-          cull_row(id(settings_display_brightness_button));
-          cull_row(id(settings_display_timeout_button));
-          cull_row(id(settings_voice_mute_button));
-          cull_row(id(settings_wake_sound_button));
-          cull_row(id(settings_wake_sensitivity_button));
+          if (id(ui_page) < 1 || id(ui_page) > 4) return;
+          lvgl_esphome_snapshot_cache_pair(id(controls_root_1), id(controls_root_2), 800);
+          lvgl_esphome_snapshot_cache_pair(id(controls_root_2), id(controls_root_3), 800);
+          lvgl_esphome_snapshot_cache_pair(id(controls_root_3), id(controls_root_4), 800);
 
   - id: ui_show_tiles_1
     then:
-      - lambda: |-
-          lv_obj_add_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_set_y(id(wear_root), 0);
+      - lvgl.widget.hide: wear_root
+      - lvgl.widget.update:
+          id: wear_root
+          y: 0
+      - script.execute: media_hide_lottie_visual
       - globals.set:
           id: ui_page
           value: '1'
-      - script.execute: ui_apply_tile_visibility
-  - id: ui_show_tiles_1_from_player
-    then:
-      - script.execute: ui_show_tiles_1
-      - lvgl.page.show:
-          id: controls_page
-          animation: MOVE_RIGHT
-          time: 250ms
+      - script.execute: ui_set_tile_visibility_1
+      - script.execute: ui_refresh_tile_snapshots
   - id: ui_show_tiles_2
     then:
-      - lambda: |-
-          lv_obj_add_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_set_y(id(wear_root), 0);
+      - lvgl.widget.hide: wear_root
+      - lvgl.widget.update:
+          id: wear_root
+          y: 0
+      - script.execute: media_hide_lottie_visual
       - globals.set:
           id: ui_page
           value: '2'
-      - script.execute: ui_apply_tile_visibility
+      - script.execute: ui_set_tile_visibility_2
+      - script.execute: ui_refresh_tile_snapshots
   - id: ui_show_tiles_3
     then:
-      - lambda: |-
-          lv_obj_add_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_set_y(id(wear_root), 0);
+      - lvgl.widget.hide: wear_root
+      - lvgl.widget.update:
+          id: wear_root
+          y: 0
+      - script.execute: media_hide_lottie_visual
       - globals.set:
           id: ui_page
           value: '3'
-      - script.execute: ui_apply_tile_visibility
+      - script.execute: ui_set_tile_visibility_3
+      - script.execute: ui_refresh_tile_snapshots
   - id: ui_show_tiles_4
     then:
-      - lambda: |-
-          lv_obj_add_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_set_y(id(wear_root), 0);
+      - lvgl.widget.hide: wear_root
+      - lvgl.widget.update:
+          id: wear_root
+          y: 0
+      - script.execute: media_hide_lottie_visual
       - globals.set:
           id: ui_page
           value: '4'
-      - script.execute: ui_apply_tile_visibility
-  - id: ui_show_player
+      - script.execute: ui_set_tile_visibility_4
+      - script.execute: ui_refresh_tile_snapshots
+  - id: ui_prepare_player_page
     then:
-      - lambda: |-
-          lv_obj_clear_flag(id(wear_root), LV_OBJ_FLAG_HIDDEN);
-          if (lv_obj_has_flag(id(album_art_background_widget), LV_OBJ_FLAG_HIDDEN)) {
-            lv_obj_clear_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
-          } else {
-            lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
-          }
-          lv_obj_set_y(id(wear_root), 0);
+      - lvgl.widget.show: wear_root
+      - lvgl.widget.update:
+          id: wear_root
+          y: 0
+      - if:
+          condition:
+            lambda: 'return lv_obj_has_flag(id(album_art_background_widget), LV_OBJ_FLAG_HIDDEN);'
+          then:
+            - script.execute: media_show_lottie_visual
+          else:
+            - script.execute: media_hide_lottie_visual
       - globals.set:
           id: ui_page
           value: '1'
-      - script.execute: ui_apply_tile_visibility
+      - script.execute: ui_set_tile_visibility_1
       - globals.set:
           id: ui_page
           value: '0'
-      - lvgl.page.show:
-          id: music_page
-          animation: MOVE_BOTTOM
-          time: 250ms
-  - id: ui_show_settings
+
+  - id: ui_prepare_settings_page
     then:
-      - lambda: |-
-          lv_obj_add_flag(id(lottie_visual_zone), LV_OBJ_FLAG_HIDDEN);
-          lv_obj_set_y(id(settings_root), 0);
+      - lvgl.widget.update:
+          id: settings_root
+          y: 0
+      - script.execute: media_hide_lottie_visual
       - globals.set:
           id: ui_page
           value: '5'
       - script.execute: ui_apply_settings_state
-      - script.execute: ui_cull_settings_rows
+
+  - id: ui_show_settings
+    then:
+      - script.execute: ui_prepare_settings_page
       - lvgl.page.show:
           id: settings_page
           animation: MOVE_BOTTOM
           time: 220ms
-  - id: ui_show_tiles_1_from_settings
-    then:
-      - script.execute: ui_show_tiles_1
-      - lvgl.page.show:
-          id: controls_page
-          animation: MOVE_TOP
-          time: 180ms
-  - id: ui_apply_settings_state
+  - id: ui_apply_diagnostics_logging_state
     then:
       - lambda: |-
-          const bool force_perf_logs = ${lvgl_profiler_auto_run};
+          const bool force_perf_logs = false;
           lvgl_esphome_set_perf_logging_enabled(force_perf_logs || id(settings_perf_logs_switch).state);
           lvgl_esphome_set_swipe_logging_enabled(id(settings_swipe_logs_switch).state);
 
-          if (id(perf_overlay_label) != nullptr) {
-            if (id(settings_perf_overlay_switch).state) {
-              lv_obj_clear_flag(id(perf_overlay_label), LV_OBJ_FLAG_HIDDEN);
-              lv_obj_move_foreground(id(perf_overlay_label));
-            } else {
-              lv_obj_add_flag(id(perf_overlay_label), LV_OBJ_FLAG_HIDDEN);
-            }
-          }
+  - id: ui_update_true_colour_state
+    then:
+      - lvgl.label.update:
+          id: settings_true_colour_value
+          text: "RGB888"
+          text_color: 0xA8F4DF
+      - lvgl.label.update:
+          id: settings_true_colour_note
+          text: "LVGL ARGB8888 / DSI 24-bit"
 
-          auto set_label_text_if_changed = [](lv_obj_t *label, const char *text) {
-            if (label == nullptr || text == nullptr) return;
-            const char *current = lv_label_get_text(label);
-            if (current == nullptr || strcmp(current, text) != 0) {
-              lv_label_set_text(label, text);
-            }
-          };
+  - id: ui_update_screen_tone_state
+    then:
+      # Screen Tone currently needs an alpha overlay, which is too expensive on this display path.
+      - lvgl.label.update:
+          id: settings_screen_tone_value
+          text: "OFF"
+          text_color: 0xAEB4C2
 
-          auto set_toggle = [&set_label_text_if_changed](lv_obj_t *button, lv_obj_t *value, bool on) {
-            if (button != nullptr) {
-              lv_obj_set_style_bg_color(button, lv_color_hex(0x1B1F2A), 0);
-              lv_obj_set_style_border_width(button, 0, 0);
-              lv_obj_set_style_shadow_width(button, 0, 0);
-              lv_obj_set_style_outline_width(button, 0, 0);
-            }
-            if (value != nullptr) {
-              set_label_text_if_changed(value, on ? "ON" : "OFF");
-              lv_obj_set_style_text_color(value, lv_color_hex(on ? 0xA8F4DF : 0xAEB4C2), 0);
-            }
-          };
+  - id: ui_update_perf_overlay_state
+    then:
+      - if:
+          condition:
+            switch.is_on: settings_perf_overlay_switch
+          then:
+            - lvgl.label.update:
+                id: settings_perf_overlay_value
+                text: "ON"
+                text_color: 0xA8F4DF
+            - lvgl.widget.show: perf_overlay_label
+            - lambda: |-
+                if (id(perf_overlay_label) != nullptr) {
+                  lv_obj_move_foreground(id(perf_overlay_label));
+                }
+          else:
+            - lvgl.label.update:
+                id: settings_perf_overlay_value
+                text: "OFF"
+                text_color: 0xAEB4C2
+            - lvgl.widget.hide: perf_overlay_label
 
-          auto set_screen_tone = [](lv_obj_t *overlay, bool on) {
-            if (overlay == nullptr) return;
-            if (on) {
-              lv_obj_clear_flag(overlay, LV_OBJ_FLAG_HIDDEN);
-            } else {
-              lv_obj_add_flag(overlay, LV_OBJ_FLAG_HIDDEN);
-            }
-          };
+  - id: ui_update_system_logs_state
+    then:
+      - if:
+          condition:
+            switch.is_on: settings_system_logs_switch
+          then:
+            - lvgl.label.update:
+                id: settings_system_logs_value
+                text: "ON"
+                text_color: 0xA8F4DF
+          else:
+            - lvgl.label.update:
+                id: settings_system_logs_value
+                text: "OFF"
+                text_color: 0xAEB4C2
 
-          set_toggle(id(settings_true_colour_button), id(settings_true_colour_value), true);
-          if (id(settings_true_colour_value) != nullptr) {
-            set_label_text_if_changed(id(settings_true_colour_value), "RGB888");
-          }
-          const bool screen_tone_render_enabled = false;  // Screen Tone currently requires an alpha overlay.
-          set_toggle(id(settings_screen_tone_button), id(settings_screen_tone_value),
-                     screen_tone_render_enabled && id(settings_screen_tone_switch).state);
-          set_toggle(id(settings_perf_overlay_button), id(settings_perf_overlay_value), id(settings_perf_overlay_switch).state);
-          set_toggle(id(settings_system_logs_button), id(settings_system_logs_value), id(settings_system_logs_switch).state);
-          set_toggle(id(settings_perf_logs_button), id(settings_perf_logs_value), id(settings_perf_logs_switch).state);
-          set_toggle(id(settings_swipe_logs_button), id(settings_swipe_logs_value), id(settings_swipe_logs_switch).state);
-          set_toggle(id(settings_beta_firmware_button), id(settings_beta_firmware_value), id(settings_beta_firmware_switch).state);
-          set_toggle(id(settings_voice_mute_button), id(settings_voice_mute_value), id(voice_assistant_mute_switch).state);
-          set_toggle(id(settings_wake_sound_button), id(settings_wake_sound_value), id(voice_assistant_wake_sound_switch).state);
+  - id: ui_update_perf_logs_state
+    then:
+      - script.execute: ui_apply_diagnostics_logging_state
+      - if:
+          condition:
+            switch.is_on: settings_perf_logs_switch
+          then:
+            - lvgl.label.update:
+                id: settings_perf_logs_value
+                text: "ON"
+                text_color: 0xA8F4DF
+          else:
+            - lvgl.label.update:
+                id: settings_perf_logs_value
+                text: "OFF"
+                text_color: 0xAEB4C2
 
-          if (id(settings_display_brightness_button) != nullptr) {
-            lv_obj_set_style_bg_color(id(settings_display_brightness_button), lv_color_hex(0x1B1F2A), 0);
-            lv_obj_set_style_border_width(id(settings_display_brightness_button), 0, 0);
-            lv_obj_set_style_shadow_width(id(settings_display_brightness_button), 0, 0);
-            lv_obj_set_style_outline_width(id(settings_display_brightness_button), 0, 0);
-          }
-          if (id(settings_display_brightness_value) != nullptr) {
-            char brightness_buf[12];
-            snprintf(brightness_buf, sizeof(brightness_buf), "%d%%", (int)(id(settings_display_brightness).state + 0.5f));
-            set_label_text_if_changed(id(settings_display_brightness_value), brightness_buf);
-          }
+  - id: ui_update_swipe_logs_state
+    then:
+      - script.execute: ui_apply_diagnostics_logging_state
+      - if:
+          condition:
+            switch.is_on: settings_swipe_logs_switch
+          then:
+            - lvgl.label.update:
+                id: settings_swipe_logs_value
+                text: "ON"
+                text_color: 0xA8F4DF
+          else:
+            - lvgl.label.update:
+                id: settings_swipe_logs_value
+                text: "OFF"
+                text_color: 0xAEB4C2
 
-          if (id(settings_display_timeout_button) != nullptr) {
-            lv_obj_set_style_bg_color(id(settings_display_timeout_button), lv_color_hex(0x1B1F2A), 0);
-            lv_obj_set_style_border_width(id(settings_display_timeout_button), 0, 0);
-            lv_obj_set_style_shadow_width(id(settings_display_timeout_button), 0, 0);
-            lv_obj_set_style_outline_width(id(settings_display_timeout_button), 0, 0);
-          }
-          if (id(settings_display_timeout_value) != nullptr) {
-            char timeout_buf[16];
-            int timeout_s = (int)(id(settings_display_timeout).state + 0.5f);
-            if (timeout_s <= 0) {
-              snprintf(timeout_buf, sizeof(timeout_buf), "Never");
-            } else {
-              snprintf(timeout_buf, sizeof(timeout_buf), "%ds", timeout_s);
-            }
-            set_label_text_if_changed(id(settings_display_timeout_value), timeout_buf);
-          }
+  - id: ui_update_beta_firmware_state
+    then:
+      - if:
+          condition:
+            switch.is_on: settings_beta_firmware_switch
+          then:
+            - lvgl.label.update:
+                id: settings_beta_firmware_value
+                text: "ON"
+                text_color: 0xA8F4DF
+          else:
+            - lvgl.label.update:
+                id: settings_beta_firmware_value
+                text: "OFF"
+                text_color: 0xAEB4C2
 
-          if (id(settings_wake_sensitivity_value) != nullptr) {
-            std::string sensitivity = id(mww_sensitivity_select).current_option().str();
-            if (sensitivity == "Slightly sensitive") {
-              sensitivity = "Slightly";
-            } else if (sensitivity == "Moderately sensitive") {
-              sensitivity = "Moderate";
-            } else if (sensitivity == "Very sensitive") {
-              sensitivity = "Very";
-            }
-            set_label_text_if_changed(id(settings_wake_sensitivity_value), sensitivity.c_str());
-          }
+  - id: ui_update_voice_mute_state
+    then:
+      - if:
+          condition:
+            switch.is_on: voice_assistant_mute_switch
+          then:
+            - lvgl.label.update:
+                id: settings_voice_mute_value
+                text: "ON"
+                text_color: 0xA8F4DF
+          else:
+            - lvgl.label.update:
+                id: settings_voice_mute_value
+                text: "OFF"
+                text_color: 0xAEB4C2
 
-          set_screen_tone(id(screen_tone_overlay_controls), false);
-          set_screen_tone(id(screen_tone_overlay_settings), false);
-          set_screen_tone(id(screen_tone_overlay_music), false);
+  - id: ui_update_wake_sound_state
+    then:
+      - if:
+          condition:
+            switch.is_on: voice_assistant_wake_sound_switch
+          then:
+            - lvgl.label.update:
+                id: settings_wake_sound_value
+                text: "ON"
+                text_color: 0xA8F4DF
+          else:
+            - lvgl.label.update:
+                id: settings_wake_sound_value
+                text: "OFF"
+                text_color: 0xAEB4C2
 
-          if (id(settings_true_colour_note) != nullptr) {
-            set_label_text_if_changed(id(settings_true_colour_note), "LVGL ARGB8888 / DSI 24-bit");
-          }
+  - id: ui_update_display_brightness_state
+    then:
+      - lvgl.label.update:
+          id: settings_display_brightness_value
+          text:
+            format: "%.0f%%"
+            args: [id(settings_display_brightness).state]
+
+  - id: ui_update_display_timeout_state
+    then:
+      - if:
+          condition:
+            lambda: 'return id(settings_display_timeout).state <= 0.5f;'
+          then:
+            - lvgl.label.update:
+                id: settings_display_timeout_value
+                text: "Never"
+          else:
+            - lvgl.label.update:
+                id: settings_display_timeout_value
+                text:
+                  format: "%.0fs"
+                  args: [id(settings_display_timeout).state]
+
+  - id: ui_update_wake_sensitivity_state
+    then:
+      - if:
+          condition:
+            select.is:
+              id: mww_sensitivity_select
+              options: ["Slightly sensitive"]
+          then:
+            - lvgl.label.update:
+                id: settings_wake_sensitivity_value
+                text: "Slightly"
+      - if:
+          condition:
+            select.is:
+              id: mww_sensitivity_select
+              options: ["Moderately sensitive"]
+          then:
+            - lvgl.label.update:
+                id: settings_wake_sensitivity_value
+                text: "Moderate"
+      - if:
+          condition:
+            select.is:
+              id: mww_sensitivity_select
+              options: ["Very sensitive"]
+          then:
+            - lvgl.label.update:
+                id: settings_wake_sensitivity_value
+                text: "Very"
+
+  - id: ui_apply_settings_state
+    then:
+      - script.execute: ui_apply_diagnostics_logging_state
+      - script.execute: ui_update_true_colour_state
+      - script.execute: ui_update_screen_tone_state
+      - script.execute: ui_update_perf_overlay_state
+      - script.execute: ui_update_system_logs_state
+      - script.execute: ui_update_perf_logs_state
+      - script.execute: ui_update_swipe_logs_state
+      - script.execute: ui_update_beta_firmware_state
+      - script.execute: ui_update_display_brightness_state
+      - script.execute: ui_update_display_timeout_state
+      - script.execute: ui_update_voice_mute_state
+      - script.execute: ui_update_wake_sound_state
+      - script.execute: ui_update_wake_sensitivity_state

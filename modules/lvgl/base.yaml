@@ -5,20 +5,54 @@ lvgl:
     - my_display
   touchscreens:
     - my_touchscreen
-  update_interval: ${display_update_interval}
-  buffer_size: ${display_buffer_size}
-  draw_rounding: ${display_draw_rounding}
+  update_interval: 10ms
+  buffer_size: 3%
+  draw_rounding: 4
   direct_mode: false
   full_refresh: false
-  byte_order: ${display_byte_order}
+  byte_order: little_endian
   bg_color: 0x05070C
   fps_benchmark: true
   # We expose FPS/CPU through our own settings-controlled HUD; keep LVGL's
   # native sysmon disabled so it does not add another always-on overlay/timer.
   perf_monitor: false
   color_depth: 32
-  use_ppa: ${lvgl_use_ppa}
-  use_ppa_img: ${lvgl_use_ppa_img}
-  profiler: ${lvgl_profiler_enabled}
+  use_ppa: true
+  use_ppa_img: true
+  profiler: false
   default_font: roboto_14
   text_font: roboto_24
+  top_layer:
+    widgets:
+      - label:
+          id: perf_overlay_label
+          text: "FPS --  CPU --%"
+          align: BOTTOM_MID
+          y: -24
+          width: 520
+          text_align: CENTER
+          text_color: 0xF4EFFA
+          bg_color: 0x10131B
+          bg_opa: 100%
+          radius: 20
+          pad_left: 10
+          pad_right: 10
+          text_font: roboto_16
+          hidden: true
+  on_idle:
+    timeout: !lambda |-
+      const float timeout_s = id(settings_display_timeout).state;
+      if (timeout_s <= 0.0f) {
+        return 0xFFFFFFFFUL;
+      }
+      return (uint32_t) (timeout_s * 1000.0f);
+    then:
+      - if:
+          condition:
+            and:
+              - lambda: 'return id(boot_sequence_done);'
+              - light.is_on: display_backlight
+          then:
+            - light.turn_off:
+                id: display_backlight
+                transition_length: 500ms
