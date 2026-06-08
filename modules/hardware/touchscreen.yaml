@@ -1,6 +1,6 @@
 # Touch controller.
-# Home pages use the snapshot compositor so drag gestures move cached bitmaps
-# while the live LVGL tree is updated only at rest.
+# Home pages use lightweight swipe tracking here. The high-performance snapshot
+# compositor is intentionally not part of the upstream-PR integration test build.
 touchscreen:
   - platform: gt911
     id: my_touchscreen
@@ -32,89 +32,30 @@ touchscreen:
     on_update:
       then:
         - lambda: |-
-            if (touches.empty()) {
-              return;
-            }
+            if (touches.empty()) return;
             const auto &touch = touches[0];
+            if (!id(tile_swipe_tracking)) return;
 
-            if (!id(tile_swipe_tracking)) {
-              return;
-            }
             id(tile_swipe_last_x) = touch.x;
             id(tile_swipe_last_y) = touch.y;
 
             const int page = id(tile_swipe_page);
-            if (page < 1 || page > 4 || id(ui_page) != page) {
-              return;
-            }
+            if (page < 1 || page > 4 || id(ui_page) != page) return;
 
             const int dx = id(tile_swipe_last_x) - id(tile_swipe_start_x);
             const int dy = id(tile_swipe_last_y) - id(tile_swipe_start_y);
-            const int abs_dx = abs(dx);
-            const int abs_dy = abs(dy);
-            if (!id(tile_swipe_dragging) && (abs_dx <= 24 || abs_dx <= abs_dy)) {
-              return;
-            }
-
             constexpr int width = 800;
             constexpr int commit_x = width / 4;
-            int next_page = id(tile_swipe_next_page);
-            int next_x = id(tile_swipe_next_x);
-            int page_dx = dx;
-            if (page_dx < -width) page_dx = -width;
-            if (page_dx > width) page_dx = width;
+            if (abs(dx) < commit_x || abs(dx) <= abs(dy)) return;
 
-            if (!id(tile_swipe_dragging)) {
-              const int dir = page_dx < 0 ? 1 : -1;
-              next_page = page + dir;
-              if (next_page < 1 || next_page > 4) {
-                return;
-              }
-              next_x = dir > 0 ? width : -width;
+            const int dir = dx < 0 ? 1 : -1;
+            const int next_page = page + dir;
+            if (next_page < 1 || next_page > 4) return;
 
-              lv_obj_t *current = nullptr;
-              lv_obj_t *next = nullptr;
-              switch (page) {
-                case 1: current = id(controls_root_1); break;
-                case 2: current = id(controls_root_2); break;
-                case 3: current = id(controls_root_3); break;
-                case 4: current = id(controls_root_4); break;
-              }
-              switch (next_page) {
-                case 1: next = id(controls_root_1); break;
-                case 2: next = id(controls_root_2); break;
-                case 3: next = id(controls_root_3); break;
-                case 4: next = id(controls_root_4); break;
-              }
-              if (current == nullptr || next == nullptr) {
-                return;
-              }
-
-              lv_indev_wait_release(lv_indev_active());
-              lvgl_esphome_snapshot_cache_pair(current, next, width);
-              if (!lvgl_esphome_snapshot_swipe_begin(current, next, width, next_x)) {
-                return;
-              }
-
-              id(tile_swipe_dragging) = true;
-              id(tile_swipe_next_page) = next_page;
-              id(tile_swipe_next_x) = next_x;
-              if (id(settings_swipe_logs_switch).state) {
-                ESP_LOGI("touch.snapshot", "begin page=%d next=%d next_x=%d", page, next_page, next_x);
-              }
-            }
-
-            if (id(tile_swipe_last_render_ms) != 0 && millis() - id(tile_swipe_last_render_ms) < 12) {
-              return;
-            }
-            id(tile_swipe_last_render_ms) = millis();
-
-            if (next_x > 0 && page_dx > 0) page_dx = 0;
-            if (next_x < 0 && page_dx < 0) page_dx = 0;
-            if (abs(page_dx) >= commit_x) {
-              id(tile_swipe_commit_latched) = true;
-            }
-            lvgl_esphome_snapshot_swipe_update(page_dx, next_x + page_dx);
+            id(tile_swipe_dragging) = true;
+            id(tile_swipe_next_page) = next_page;
+            id(tile_swipe_next_x) = dir > 0 ? width : -width;
+            id(tile_swipe_commit_latched) = true;
     on_release:
       then:
         - lambda: |-
@@ -123,8 +64,7 @@ touchscreen:
             }
             id(tile_swipe_tracking) = false;
             const int page = id(tile_swipe_page);
-            const int next_page = id(tile_swipe_next_page);
-            const int next_x = id(tile_swipe_next_x);
+            int next_page = id(tile_swipe_next_page);
             const int dx = id(tile_swipe_last_x) - id(tile_swipe_start_x);
             const int dy = id(tile_swipe_last_y) - id(tile_swipe_start_y);
             const int abs_dx = abs(dx);
@@ -132,20 +72,22 @@ touchscreen:
             constexpr int width = 800;
             constexpr int commit_x = width / 4;
 
-            if (id(tile_swipe_dragging) && next_page >= 1 && next_page <= 4) {
-              const bool commit = id(tile_swipe_commit_latched) || (abs_dx >= commit_x && abs_dx > abs_dy);
-              const int final_current_x = commit ? (next_x > 0 ? -width : width) : 0;
-              const int final_next_x = commit ? 0 : next_x;
+            if (next_page < 1 || next_page > 4) {
+              const int dir = dx < 0 ? 1 : -1;
+              next_page = page + dir;
+            }
 
-              lvgl_esphome_snapshot_swipe_finish(final_current_x, final_next_x, 130, commit);
-              id(ui_page) = commit ? next_page : page;
+            const bool commit =
+                (id(tile_swipe_commit_latched) || (abs_dx >= commit_x && abs_dx > abs_dy)) &&
+                next_page >= 1 && next_page <= 4;
+
+            if (commit) {
+              id(ui_page) = next_page;
               id(ui_apply_tile_visibility).execute();
               if (id(settings_swipe_logs_switch).state) {
-                ESP_LOGI("touch.snapshot", "finish page=%d next=%d commit=%d latched=%d dx=%d",
-                         page, next_page, commit, id(tile_swipe_commit_latched), dx);
+                ESP_LOGI("touch.swipe", "page=%d next=%d latched=%d dx=%d",
+                         page, next_page, id(tile_swipe_commit_latched), dx);
               }
-            } else {
-              lvgl_esphome_snapshot_swipe_end();
             }
 
             id(tile_swipe_dragging) = false;

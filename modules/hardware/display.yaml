@@ -6,8 +6,9 @@ output:
     pin: GPIO26
     frequency: ${backlight_pwm_frequency}
     inverted: true
-    min_power: 0.0
-    max_power: 0.8
+    min_power: ${backlight_min_power}
+    max_power: ${backlight_max_power}
+    zero_means_zero: true
 
 light:
   - platform: monochromatic

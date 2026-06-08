@@ -1,5 +1,11 @@
 # Boot-time and Home Assistant memory diagnostics.
 # These values make PSRAM mode/speed visible even when ESP-IDF early boot logs are missed.
+esphome:
+  includes:
+    - <esp_heap_caps.h>
+    - <esp_psram.h>
+    - <sdkconfig.h>
+
 script:
   - id: log_memory_diagnostics
     mode: restart

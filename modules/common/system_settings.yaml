@@ -18,44 +18,46 @@ script:
   - id: display_apply_brightness
     mode: restart
     then:
-      - lambda: |-
-          if (!id(boot_sequence_done) || !id(display_awake)) return;
-          float brightness_state = id(settings_display_brightness).state;
-          if (!(brightness_state >= 5.0f && brightness_state <= 100.0f)) {
-            brightness_state = ${display_brightness_default};
-          }
-          float brightness = brightness_state / 100.0f;
-          auto call = id(display_backlight).turn_on();
-          call.set_brightness(brightness);
-          call.set_transition_length(250);
-          call.perform();
+      - if:
+          condition:
+            lambda: 'return id(boot_sequence_done) && id(display_awake);'
+          then:
+            - light.turn_on:
+                id: display_backlight
+                brightness: !lambda 'return id(settings_display_brightness).state / 100.0f;'
+                transition_length: 250ms
 
   - id: display_wake
     mode: restart
     then:
-      - lambda: |-
-          id(display_last_interaction_ms) = millis();
-          if (!id(boot_sequence_done)) return;
-          id(display_awake) = true;
-          float brightness_state = id(settings_display_brightness).state;
-          if (!(brightness_state >= 5.0f && brightness_state <= 100.0f)) {
-            brightness_state = ${display_brightness_default};
-          }
-          float brightness = brightness_state / 100.0f;
-          auto call = id(display_backlight).turn_on();
-          call.set_brightness(brightness);
-          call.set_transition_length(250);
-          call.perform();
+      - globals.set:
+          id: display_last_interaction_ms
+          value: !lambda 'return millis();'
+      - if:
+          condition:
+            lambda: 'return id(boot_sequence_done);'
+          then:
+            - globals.set:
+                id: display_awake
+                value: 'true'
+            - light.turn_on:
+                id: display_backlight
+                brightness: !lambda 'return id(settings_display_brightness).state / 100.0f;'
+                transition_length: 250ms
 
   - id: display_sleep
     mode: restart
     then:
-      - lambda: |-
-          if (!id(boot_sequence_done) || !id(display_awake)) return;
-          id(display_awake) = false;
-          auto call = id(display_backlight).turn_off();
-          call.set_transition_length(500);
-          call.perform();
+      - if:
+          condition:
+            lambda: 'return id(boot_sequence_done) && id(display_awake);'
+          then:
+            - globals.set:
+                id: display_awake
+                value: 'false'
+            - light.turn_off:
+                id: display_backlight
+                transition_length: 500ms
 
 interval:
   - interval: 1s

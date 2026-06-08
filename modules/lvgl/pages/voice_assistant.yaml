@@ -73,8 +73,8 @@ lvgl:
                   - lottie:
                       id: voice_assistant_lottie
                       file: "assets/animations/voice_assistant.json"
-                      width: 238
-                      height: 238
+                      width: 240
+                      height: 240
                       align: CENTER
                       loop: true
                       auto_start: true

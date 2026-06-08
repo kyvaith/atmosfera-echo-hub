@@ -327,13 +327,9 @@ lvgl:
                         text_font: roboto_24
                   on_click:
                     then:
-                      - number.set:
+                      - number.increment:
                           id: settings_display_brightness
-                          value: !lambda |-
-                            float value = id(settings_display_brightness).state + 10.0f;
-                            if (value > 100.0f) value = 40.0f;
-                            return value;
-                      - script.execute: ui_apply_settings_state
+                          cycle: true
               - button:
                   id: settings_display_timeout_button
                   x: 104

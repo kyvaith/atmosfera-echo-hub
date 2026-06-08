@@ -54,6 +54,10 @@ substitutions:
   lvgl_profiler_auto_run: "false"
   touch_update_interval: 16ms
   backlight_pwm_frequency: 20000Hz
+  # The current backlight circuit drops out below the old ~70% UI level.
+  # With max_power=80%, that maps to roughly 56% PWM before output inversion.
+  backlight_min_power: 56%
+  backlight_max_power: 80%
 
   # Artwork and playback behavior
   image_byte_order: little_endian

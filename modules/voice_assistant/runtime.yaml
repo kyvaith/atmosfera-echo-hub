@@ -322,26 +322,13 @@ script:
           }
           if (id(voice_assistant_lottie) != nullptr) {
             auto *ctx = static_cast<esphome::lvgl::LottieContext *>(lv_obj_get_user_data(id(voice_assistant_lottie)));
-            const bool was_hidden = lv_obj_has_flag(id(voice_assistant_lottie), LV_OBJ_FLAG_HIDDEN);
             if (visible) {
-              if (ctx != nullptr) {
-                const bool was_runtime_hidden = ctx->runtime_hidden;
-                ctx->runtime_hidden = false;
-                if (ctx->pixel_buffer == nullptr) {
-                  esphome::lvgl::lottie_launch(ctx);
-                } else {
-                  lv_obj_clear_flag(id(voice_assistant_lottie), LV_OBJ_FLAG_HIDDEN);
-                  if (was_hidden || was_runtime_hidden) {
-                    esphome::lvgl::lottie_restart(ctx);
-                  }
-                }
-              } else {
+              if (ctx == nullptr) {
                 lv_obj_clear_flag(id(voice_assistant_lottie), LV_OBJ_FLAG_HIDDEN);
+              } else {
+                esphome::lvgl::lottie_show(ctx, true);
               }
             } else {
-              lv_obj_add_flag(id(voice_assistant_lottie), LV_OBJ_FLAG_HIDDEN);
-              if (ctx != nullptr) {
-                ctx->runtime_hidden = true;
-              }
+              esphome::lvgl::lottie_hide(ctx);
             }
           }
