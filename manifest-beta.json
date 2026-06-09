@@ -11,7 +11,13 @@
           "path": "firmware.factory.bin",
           "offset": 0
         }
-      ]
+      ],
+      "ota": {
+        "path": "firmware.ota.bin",
+        "md5": "00000000000000000000000000000000",
+        "summary": "Atmosfera Echo Hub beta development firmware",
+        "release_url": "https://github.com/kyvaith/Atmosfera-Echo-Hub/releases"
+      }
     }
   ]
 }
