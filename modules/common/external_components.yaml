@@ -7,7 +7,7 @@ external_components:
       url: https://github.com/kyvaith/esphome
       ref: dev
       path: esphome/components
-    components: [mipi_dsi, lvgl, image, es7210]
+    components: [mipi_dsi, lvgl, image, es7210, esp32_jpeg]
     refresh: always
   - source: github://jtenniswood/esphome-media-player@main
     components: [artwork_image]
