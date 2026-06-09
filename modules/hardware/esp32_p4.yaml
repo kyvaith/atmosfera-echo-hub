@@ -7,6 +7,7 @@ esp32:
   engineering_sample: true
   framework:
     type: esp-idf
+    version: 6.0.1
     advanced:
       enable_idf_experimental_features: true
       compiler_optimization: PERF
@@ -36,6 +37,7 @@ esp32:
       # normally selected by IDF already, but listing them keeps the display
       # latency assumptions explicit in this project.
       CONFIG_LCD_DSI_ISR_HANDLER_IN_IRAM: "y"
+      CONFIG_LCD_DSI_ISR_CACHE_SAFE: "y"
       CONFIG_LCD_DSI_OBJ_FORCE_INTERNAL: "y"
       CONFIG_ESP_IPC_ENABLE: "y"
       CONFIG_ESPTOOLPY_FLASHMODE_QIO: "y"

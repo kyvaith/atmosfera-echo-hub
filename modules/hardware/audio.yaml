@@ -16,6 +16,7 @@ i2s_audio:
     i2s_mclk_pin: GPIO13
     i2s_lrclk_pin: GPIO10
     i2s_bclk_pin: GPIO12
+    full_duplex: true
 
 audio_dac:
   - platform: es8311
@@ -29,7 +30,7 @@ audio_adc:
     i2c_id: touchscreen_bus
     address: 0x40
     bits_per_sample: 16bit
-    sample_rate: 16000
+    sample_rate: 48000
     mic_gain: 30db
 
 speaker:
@@ -41,6 +42,7 @@ speaker:
     dac_type: external
     channel: stereo
     buffer_duration: 100ms
+    timeout: never
     bits_per_sample: 16bit
     sample_rate: 48000
 

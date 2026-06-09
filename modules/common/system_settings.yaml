@@ -1,329 +1,330 @@
 # Device-level runtime settings.
 # These entities are exposed in Home Assistant and mirrored where practical on the round settings page.
 globals:
-  - id: boot_sequence_done
-    type: bool
-    restore_value: no
-    initial_value: 'false'
+- id: boot_sequence_done
+  type: bool
+  restore_value: no
+  initial_value: 'false'
 
 script:
-  - id: display_wake
-    mode: restart
-    then:
-      - if:
-          condition:
-            lambda: 'return id(boot_sequence_done);'
-          then:
-            - light.turn_on:
-                id: display_backlight
-                brightness: !lambda 'return id(settings_display_brightness).state / 100.0f;'
-                transition_length: 250ms
+- id: display_wake
+  mode: restart
+  then:
+  - if:
+      condition:
+        lambda: 'return id(boot_sequence_done);'
+      then:
+      - delay: 250ms
+      - light.turn_on:
+          id: display_backlight
+          brightness: !lambda 'return id(settings_display_brightness).state / 100.0f;'
+          transition_length: 500ms
 
 switch:
-  - platform: template
-    id: settings_beta_firmware_switch
-    name: "Beta Firmware"
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    entity_category: config
-    disabled_by_default: true
-    icon: "mdi:test-tube"
-    on_turn_on:
-      - logger.log:
-          level: INFO
-          tag: firmware
-          format: "OTA updates set to beta channel"
-      - lambda: 'id(firmware_update).set_source_url("${firmware_manifest_beta_url}");'
-      - component.update: firmware_update
-      - script.execute: ui_update_beta_firmware_state
-    on_turn_off:
-      - logger.log:
-          level: INFO
-          tag: firmware
-          format: "OTA updates set to stable channel"
-      - lambda: 'id(firmware_update).set_source_url("${firmware_manifest_url}");'
-      - component.update: firmware_update
-      - script.execute: ui_update_beta_firmware_state
-  - platform: template
-    id: settings_true_colour_switch
-    name: "True Colour Mode"
-    optimistic: true
-    restore_mode: ALWAYS_ON
-    on_turn_on:
-      - script.execute: ui_update_true_colour_state
-    on_turn_off:
-      - switch.turn_on: settings_true_colour_switch
-      - script.execute: ui_update_true_colour_state
-  - platform: template
-    id: settings_screen_tone_switch
-    name: "Screen Tone"
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    on_turn_on:
-      - script.execute: ui_update_screen_tone_state
-    on_turn_off:
-      - script.execute: ui_update_screen_tone_state
-  - platform: template
-    id: settings_perf_overlay_switch
-    name: "Performance Overlay"
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    on_turn_on:
-      - script.execute: ui_update_perf_overlay_state
-    on_turn_off:
-      - script.execute: ui_update_perf_overlay_state
-  - platform: template
-    id: settings_system_logs_switch
-    name: "System Logs"
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    on_turn_on:
-      - logger.set_level: INFO
-      - script.execute: ui_update_system_logs_state
-    on_turn_off:
-      - logger.set_level: WARN
-      - script.execute: ui_update_system_logs_state
-  - platform: template
-    id: settings_perf_logs_switch
-    name: "Performance Logs"
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    on_turn_on:
-      - script.execute: ui_update_perf_logs_state
-    on_turn_off:
-      - script.execute: ui_update_perf_logs_state
-  - platform: template
-    id: settings_swipe_logs_switch
-    name: "Swipe Debug Logs"
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    on_turn_on:
-      - script.execute: ui_update_swipe_logs_state
-    on_turn_off:
-      - script.execute: ui_update_swipe_logs_state
+- platform: template
+  id: settings_beta_firmware_switch
+  name: "Beta Firmware"
+  optimistic: true
+  restore_mode: RESTORE_DEFAULT_OFF
+  entity_category: config
+  disabled_by_default: true
+  icon: "mdi:test-tube"
+  on_turn_on:
+  - logger.log:
+      level: INFO
+      tag: firmware
+      format: "OTA updates set to beta channel"
+  - lambda: 'id(firmware_update).set_source_url("${firmware_manifest_beta_url}");'
+  - component.update: firmware_update
+  - script.execute: ui_update_beta_firmware_state
+  on_turn_off:
+  - logger.log:
+      level: INFO
+      tag: firmware
+      format: "OTA updates set to stable channel"
+  - lambda: 'id(firmware_update).set_source_url("${firmware_manifest_url}");'
+  - component.update: firmware_update
+  - script.execute: ui_update_beta_firmware_state
+- platform: template
+  id: settings_true_colour_switch
+  name: "True Colour Mode"
+  optimistic: true
+  restore_mode: ALWAYS_ON
+  on_turn_on:
+  - script.execute: ui_update_true_colour_state
+  on_turn_off:
+  - switch.turn_on: settings_true_colour_switch
+  - script.execute: ui_update_true_colour_state
+- platform: template
+  id: settings_screen_tone_switch
+  name: "Screen Tone"
+  optimistic: true
+  restore_mode: RESTORE_DEFAULT_OFF
+  on_turn_on:
+  - script.execute: ui_update_screen_tone_state
+  on_turn_off:
+  - script.execute: ui_update_screen_tone_state
+- platform: template
+  id: settings_perf_overlay_switch
+  name: "Performance Overlay"
+  optimistic: true
+  restore_mode: RESTORE_DEFAULT_OFF
+  on_turn_on:
+  - script.execute: ui_update_perf_overlay_state
+  on_turn_off:
+  - script.execute: ui_update_perf_overlay_state
+- platform: template
+  id: settings_system_logs_switch
+  name: "System Logs"
+  optimistic: true
+  restore_mode: RESTORE_DEFAULT_OFF
+  on_turn_on:
+  - logger.set_level: INFO
+  - script.execute: ui_update_system_logs_state
+  on_turn_off:
+  - logger.set_level: WARN
+  - script.execute: ui_update_system_logs_state
+- platform: template
+  id: settings_perf_logs_switch
+  name: "Performance Logs"
+  optimistic: true
+  restore_mode: RESTORE_DEFAULT_OFF
+  on_turn_on:
+  - script.execute: ui_update_perf_logs_state
+  on_turn_off:
+  - script.execute: ui_update_perf_logs_state
+- platform: template
+  id: settings_swipe_logs_switch
+  name: "Swipe Debug Logs"
+  optimistic: true
+  restore_mode: RESTORE_DEFAULT_OFF
+  on_turn_on:
+  - script.execute: ui_update_swipe_logs_state
+  on_turn_off:
+  - script.execute: ui_update_swipe_logs_state
 
 number:
-  - platform: template
-    id: settings_display_brightness
-    name: "Display Brightness"
-    min_value: 5
-    max_value: 100
-    step: 5
-    initial_value: 85
-    optimistic: true
-    restore_value: true
-    unit_of_measurement: "%"
-    icon: "mdi:brightness-6"
-    entity_category: config
-    mode: slider
-    on_value:
-      - script.execute: ui_update_display_brightness_state
-      - if:
-          condition:
-            and:
-              - lambda: 'return id(boot_sequence_done);'
-              - light.is_on: display_backlight
-          then:
-            - light.turn_on:
-                id: display_backlight
-                brightness: !lambda 'return id(settings_display_brightness).state / 100.0f;'
-                transition_length: 250ms
+- platform: template
+  id: settings_display_brightness
+  name: "Display Brightness"
+  min_value: 5
+  max_value: 100
+  step: 5
+  initial_value: 85
+  optimistic: true
+  restore_value: true
+  unit_of_measurement: "%"
+  icon: "mdi:brightness-6"
+  entity_category: config
+  mode: slider
+  on_value:
+  - script.execute: ui_update_display_brightness_state
+  - if:
+      condition:
+        and:
+        - lambda: 'return id(boot_sequence_done);'
+        - light.is_on: display_backlight
+      then:
+      - light.turn_on:
+          id: display_backlight
+          brightness: !lambda 'return id(settings_display_brightness).state / 100.0f;'
+          transition_length: 250ms
 
-  - platform: template
-    id: settings_display_timeout
-    name: "Display Timeout"
-    min_value: 0
-    max_value: 300
-    step: 15
-    initial_value: 60
-    optimistic: true
-    restore_value: true
-    unit_of_measurement: "s"
-    icon: "mdi:timer-outline"
-    entity_category: config
-    mode: box
-    on_value:
-      - script.execute: ui_update_display_timeout_state
+- platform: template
+  id: settings_display_timeout
+  name: "Display Timeout"
+  min_value: 0
+  max_value: 300
+  step: 15
+  initial_value: 60
+  optimistic: true
+  restore_value: true
+  unit_of_measurement: "s"
+  icon: "mdi:timer-outline"
+  entity_category: config
+  mode: box
+  on_value:
+  - script.execute: ui_update_display_timeout_state
 
 text:
-  - platform: template
-    name: "Tile: Light Entity"
-    id: tile_light_entity_text
-    entity_category: config
-    icon: "mdi:lightbulb"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${tile_light_entity}"
-    min_length: 0
-    max_length: 120
+- platform: template
+  name: "Tile: Light Entity"
+  id: tile_light_entity_text
+  entity_category: config
+  icon: "mdi:lightbulb"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${tile_light_entity}"
+  min_length: 0
+  max_length: 120
 
-  - platform: template
-    name: "Tile: Switch Entity"
-    id: tile_switch_entity_text
-    entity_category: config
-    icon: "mdi:toggle-switch"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${tile_switch_entity}"
-    min_length: 0
-    max_length: 120
+- platform: template
+  name: "Tile: Switch Entity"
+  id: tile_switch_entity_text
+  entity_category: config
+  icon: "mdi:toggle-switch"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${tile_switch_entity}"
+  min_length: 0
+  max_length: 120
 
-  - platform: template
-    name: "Tile: Scene Entity"
-    id: tile_scene_entity_text
-    entity_category: config
-    icon: "mdi:palette"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${tile_scene_entity}"
-    min_length: 0
-    max_length: 120
+- platform: template
+  name: "Tile: Scene Entity"
+  id: tile_scene_entity_text
+  entity_category: config
+  icon: "mdi:palette"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${tile_scene_entity}"
+  min_length: 0
+  max_length: 120
 
-  - platform: template
-    name: "Tile: Trigger Entity"
-    id: tile_trigger_entity_text
-    entity_category: config
-    icon: "mdi:gesture-tap-button"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${tile_trigger_entity}"
-    min_length: 0
-    max_length: 120
+- platform: template
+  name: "Tile: Trigger Entity"
+  id: tile_trigger_entity_text
+  entity_category: config
+  icon: "mdi:gesture-tap-button"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${tile_trigger_entity}"
+  min_length: 0
+  max_length: 120
 
-  - platform: template
-    name: "Tile: Cover Entity"
-    id: tile_cover_entity_text
-    entity_category: config
-    icon: "mdi:window-shutter"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${tile_cover_entity}"
-    min_length: 0
-    max_length: 120
+- platform: template
+  name: "Tile: Cover Entity"
+  id: tile_cover_entity_text
+  entity_category: config
+  icon: "mdi:window-shutter"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${tile_cover_entity}"
+  min_length: 0
+  max_length: 120
 
-  - platform: template
-    name: "Tile: Garage Entity"
-    id: tile_garage_entity_text
-    entity_category: config
-    icon: "mdi:garage"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${tile_garage_entity}"
-    min_length: 0
-    max_length: 120
+- platform: template
+  name: "Tile: Garage Entity"
+  id: tile_garage_entity_text
+  entity_category: config
+  icon: "mdi:garage"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${tile_garage_entity}"
+  min_length: 0
+  max_length: 120
 
-  - platform: template
-    name: "Tile: Lock Entity"
-    id: tile_lock_entity_text
-    entity_category: config
-    icon: "mdi:lock"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${tile_lock_entity}"
-    min_length: 0
-    max_length: 120
+- platform: template
+  name: "Tile: Lock Entity"
+  id: tile_lock_entity_text
+  entity_category: config
+  icon: "mdi:lock"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${tile_lock_entity}"
+  min_length: 0
+  max_length: 120
 
-  - platform: template
-    name: "Tile: Climate Entity"
-    id: tile_climate_entity_text
-    entity_category: config
-    icon: "mdi:thermostat"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${tile_climate_entity}"
-    min_length: 0
-    max_length: 120
+- platform: template
+  name: "Tile: Climate Entity"
+  id: tile_climate_entity_text
+  entity_category: config
+  icon: "mdi:thermostat"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${tile_climate_entity}"
+  min_length: 0
+  max_length: 120
 
-  - platform: template
-    name: "Tile: Fan Entity"
-    id: tile_fan_entity_text
-    entity_category: config
-    icon: "mdi:fan"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${tile_fan_entity}"
-    min_length: 0
-    max_length: 120
+- platform: template
+  name: "Tile: Fan Entity"
+  id: tile_fan_entity_text
+  entity_category: config
+  icon: "mdi:fan"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${tile_fan_entity}"
+  min_length: 0
+  max_length: 120
 
-  - platform: template
-    name: "Tile: Alarm Entity"
-    id: tile_alarm_entity_text
-    entity_category: config
-    icon: "mdi:shield-home"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${tile_alarm_entity}"
-    min_length: 0
-    max_length: 120
+- platform: template
+  name: "Tile: Alarm Entity"
+  id: tile_alarm_entity_text
+  entity_category: config
+  icon: "mdi:shield-home"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${tile_alarm_entity}"
+  min_length: 0
+  max_length: 120
 
-  - platform: template
-    name: "Speaker Group Sensor"
-    id: speaker_group_entity
-    entity_category: config
-    icon: "mdi:speaker-multiple"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "sensor.speaker_group"
-    min_length: 0
-    max_length: 120
-    on_value:
-      - script.execute: subscribe_speaker_group_sensor
+- platform: template
+  name: "Speaker Group Sensor"
+  id: speaker_group_entity
+  entity_category: config
+  icon: "mdi:speaker-multiple"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "sensor.speaker_group"
+  min_length: 0
+  max_length: 120
+  on_value:
+  - script.execute: subscribe_speaker_group_sensor
 
-  - platform: template
-    name: "Voice Language"
-    id: settings_voice_language
-    entity_category: config
-    icon: "mdi:translate"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${voice_language_default}"
-    min_length: 0
-    max_length: 32
+- platform: template
+  name: "Voice Language"
+  id: settings_voice_language
+  entity_category: config
+  icon: "mdi:translate"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${voice_language_default}"
+  min_length: 0
+  max_length: 32
 
-  - platform: template
-    name: "Voice Region"
-    id: settings_voice_region
-    entity_category: config
-    icon: "mdi:map-marker-radius"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${voice_region_default}"
-    min_length: 0
-    max_length: 64
+- platform: template
+  name: "Voice Region"
+  id: settings_voice_region
+  entity_category: config
+  icon: "mdi:map-marker-radius"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${voice_region_default}"
+  min_length: 0
+  max_length: 64
 
-  - platform: template
-    name: "Wake Word"
-    id: settings_wake_word
-    entity_category: config
-    icon: "mdi:microphone-message"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${wake_word_default}"
-    min_length: 0
-    max_length: 64
+- platform: template
+  name: "Wake Word"
+  id: settings_wake_word
+  entity_category: config
+  icon: "mdi:microphone-message"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${wake_word_default}"
+  min_length: 0
+  max_length: 64
 
-  - platform: template
-    name: "Voice Assistant"
-    id: settings_voice_assistant
-    entity_category: config
-    icon: "mdi:account-voice"
-    mode: text
-    optimistic: true
-    restore_value: true
-    initial_value: "${voice_assistant_default}"
-    min_length: 0
-    max_length: 64
+- platform: template
+  name: "Voice Assistant"
+  id: settings_voice_assistant
+  entity_category: config
+  icon: "mdi:account-voice"
+  mode: text
+  optimistic: true
+  restore_value: true
+  initial_value: "${voice_assistant_default}"
+  min_length: 0
+  max_length: 64

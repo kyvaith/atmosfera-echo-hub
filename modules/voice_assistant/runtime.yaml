@@ -26,6 +26,10 @@ globals:
   - id: is_timer_active
     type: bool
     restore_value: false
+  - id: voice_assistant_paused_media
+    type: bool
+    restore_value: false
+    initial_value: 'false'
 
 microphone:
   - platform: i2s_audio
@@ -33,18 +37,26 @@ microphone:
     adc_type: external
     i2s_audio_id: audio_bus
     i2s_din_pin: GPIO11
-    sample_rate: 16000
+    sample_rate: 48000
     bits_per_sample: 16bit
-    channel: right
+    channel: stereo
     pdm: false
     correct_dc_offset: true
 
+  - platform: resampler
+    id: voice_microphone
+    microphone:
+      microphone: onboard_microphone
+      channels: 1
+    sample_rate: 16000
+    buffer_duration: 500ms
+
 micro_wake_word:
   id: wake_word_engine
-  task_stack_in_psram: true
+  ring_buffer_duration: 500ms
   vad:
   microphone:
-    microphone: onboard_microphone
+    microphone: voice_microphone
     channels: 0
     gain_factor: 4
   models:
@@ -76,11 +88,25 @@ micro_wake_word:
                         - voice_assistant.stop:
                       else:
                         - script.execute: display_wake
+                        - if:
+                            condition:
+                              media_player.is_playing: local_music_player
+                            then:
+                              - globals.set:
+                                  id: voice_assistant_paused_media
+                                  value: 'true'
+                              - media_player.pause: local_music_player
+                              - delay: 300ms
+                            else:
+                              - globals.set:
+                                  id: voice_assistant_paused_media
+                                  value: 'false'
                         - lambda: |-
                             id(voice_assistant_phase) = ${voice_assist_waiting_phase_id};
                             id(voice_assistant_request_text).publish_state("");
                             id(voice_assistant_response_text).publish_state("");
                         - script.execute: voice_assistant_update_overlay
+                        - micro_wake_word.stop:
                         - voice_assistant.start:
                             wake_word: !lambda return wake_word;
 
@@ -194,7 +220,7 @@ text_sensor:
 voice_assistant:
   id: va
   microphone:
-    microphone: onboard_microphone
+    microphone: voice_microphone
     channels: 0
   micro_wake_word: wake_word_engine
   media_player: local_music_player
@@ -234,6 +260,16 @@ voice_assistant:
         decibel_reduction: 0
         duration: 1s
   on_start:
+    - micro_wake_word.stop:
+    - if:
+        condition:
+          media_player.is_playing: local_music_player
+        then:
+          - globals.set:
+              id: voice_assistant_paused_media
+              value: 'true'
+          - media_player.pause: local_music_player
+          - delay: 300ms
     - mixer_speaker.apply_ducking:
         id: media_mixing_input
         decibel_reduction: 20
@@ -309,6 +345,14 @@ voice_assistant:
         then:
           - delay: 250ms
           - micro_wake_word.start:
+    - if:
+        condition:
+          lambda: return id(voice_assistant_paused_media);
+        then:
+          - media_player.play: local_music_player
+          - globals.set:
+              id: voice_assistant_paused_media
+              value: 'false'
   on_timer_started:
     - script.execute: check_if_timers_active
     - script.execute: voice_assistant_update_overlay
