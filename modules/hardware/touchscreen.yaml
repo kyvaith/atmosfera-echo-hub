@@ -100,7 +100,7 @@ touchscreen:
               return;
             }
             id(tile_swipe_last_render_ms) = now;
-            lvgl_esphome_snapshot_swipe_update(current_x, next_x);
+            lvgl_esphome_snapshot_swipe_request_update(current_x, next_x);
     on_release:
       then:
         - lambda: |-
@@ -151,7 +151,7 @@ touchscreen:
                 if (duration_ms < 140) duration_ms = 140;
                 if (duration_ms > 420) duration_ms = 420;
               }
-              lvgl_esphome_snapshot_swipe_finish(target_current_x, target_next_x, duration_ms, commit);
+              lvgl_esphome_snapshot_swipe_request_finish(target_current_x, target_next_x, duration_ms, commit);
             } else {
               lvgl_esphome_snapshot_swipe_end();
             }
