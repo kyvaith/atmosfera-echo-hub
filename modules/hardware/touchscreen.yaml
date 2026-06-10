@@ -15,7 +15,7 @@ touchscreen:
             }
 
             const int page = id(ui_page);
-            id(tile_swipe_tracking) = page >= 1 && page <= 4;
+            id(tile_swipe_tracking) = id(ui_active_app) == 0 && page >= 1 && page <= 4;
             id(tile_swipe_dragging) = false;
             id(tile_swipe_page) = page;
             id(tile_swipe_next_page) = 0;
@@ -27,11 +27,35 @@ touchscreen:
             id(tile_swipe_last_y) = touch.y;
             id(tile_swipe_last_render_ms) = 0;
 
+            id(app_close_tracking) = id(ui_active_app) != 0 && touch.y >= 740;
+            if (id(app_close_tracking)) {
+              id(app_close_prewarm_requested) = true;
+            }
+            id(app_close_dragging) = false;
+            id(app_close_start_x) = touch.x;
+            id(app_close_start_y) = touch.y;
+            id(app_close_last_x) = touch.x;
+            id(app_close_last_y) = touch.y;
+
     on_update:
       then:
         - lambda: |-
             if (touches.empty()) return;
             const auto &touch = touches[0];
+            if (id(app_close_tracking)) {
+              id(app_close_last_x) = touch.x;
+              id(app_close_last_y) = touch.y;
+              const int dx = id(app_close_last_x) - id(app_close_start_x);
+              const int dy_up = id(app_close_start_y) - id(app_close_last_y);
+              constexpr int close_start_y = 10;
+              if (!id(app_close_dragging) && dy_up >= close_start_y && dy_up > abs(dx) + 4) {
+                id(app_close_dragging) = true;
+                id(ui_touch_click_block_until_ms) = millis() + 700;
+                id(app_close_requested) = true;
+                id(app_close_tracking) = false;
+                return;
+              }
+            }
             if (!id(tile_swipe_tracking)) return;
 
             id(tile_swipe_last_x) = touch.x;
@@ -75,6 +99,7 @@ touchscreen:
                 return;
               }
               id(tile_swipe_dragging) = true;
+              id(ui_touch_click_block_until_ms) = millis() + 700;
               id(tile_swipe_next_page) = next_page;
               id(tile_swipe_next_x) = next_x;
               id(tile_swipe_last_render_ms) = 0;
@@ -104,6 +129,17 @@ touchscreen:
     on_release:
       then:
         - lambda: |-
+            if (id(app_close_tracking)) {
+              const int dx = id(app_close_last_x) - id(app_close_start_x);
+              const int dy = id(app_close_last_y) - id(app_close_start_y);
+              if (abs(dx) > 10 || abs(dy) > 10) {
+                id(ui_touch_click_block_until_ms) = millis() + 300;
+              }
+              id(app_close_tracking) = false;
+              id(app_close_dragging) = false;
+              id(app_close_prewarm_requested) = false;
+              lvgl_esphome_snapshot_app_clear_prepared_close();
+            }
             if (!id(tile_swipe_tracking)) {
               return;
             }
@@ -116,6 +152,9 @@ touchscreen:
             const int abs_dy = abs(dy);
             constexpr int width = 800;
             constexpr int commit_x = width / 4;
+            if (id(tile_swipe_dragging) || abs_dx > 10 || abs_dy > 10) {
+              id(ui_touch_click_block_until_ms) = millis() + 300;
+            }
 
             auto clamp_i = [](int value, int lo, int hi) -> int {
               if (value < lo) return lo;

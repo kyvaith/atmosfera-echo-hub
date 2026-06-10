@@ -511,11 +511,7 @@ lvgl:
                   text_font: material_symbols_24
             on_click:
               then:
-                - script.execute: ui_show_tiles_1
-                - lvgl.page.show:
-                    id: controls_page
-                    animation: MOVE_TOP
-                    time: 180ms
+                - script.execute: ui_close_app
         - obj:
             id: screen_tone_overlay_settings
             x: 0

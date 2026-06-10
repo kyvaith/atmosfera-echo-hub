@@ -5,6 +5,52 @@ globals:
     type: int
     restore_value: no
     initial_value: '1'
+  # Application registry. Home/tile pages keep using ui_page=1..4; every
+  # fullscreen program is tracked here so launch/close gestures stay generic.
+  - id: ui_home_page
+    type: int
+    restore_value: no
+    initial_value: '1'
+  - id: ui_active_app
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: ui_touch_click_block_until_ms
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: app_close_tracking
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: app_close_dragging
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: app_close_requested
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: app_close_prewarm_requested
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: app_close_start_x
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: app_close_start_y
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: app_close_last_x
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: app_close_last_y
+    type: int
+    restore_value: no
+    initial_value: '0'
   - id: tile_swipe_tracking
     type: bool
     restore_value: no
@@ -50,64 +96,287 @@ globals:
     restore_value: no
     initial_value: '0'
 
+interval:
+  - interval: 25ms
+    then:
+      - if:
+          condition:
+            lambda: 'return id(app_close_prewarm_requested);'
+          then:
+            - globals.set:
+                id: app_close_prewarm_requested
+                value: 'false'
+            - lambda: |-
+                lv_obj_t *app = nullptr;
+                if (id(ui_active_app) == 1) app = id(wear_root);
+                else if (id(ui_active_app) == 2) app = id(settings_root);
+                else if (id(ui_active_app) == 3) app = id(voice_assistant_overlay);
+                if (app != nullptr) {
+                  lvgl_esphome_snapshot_app_prepare_close(app);
+                }
+      - if:
+          condition:
+            lambda: 'return id(app_close_requested);'
+          then:
+            - globals.set:
+                id: app_close_requested
+                value: 'false'
+            - script.execute: ui_close_app
+
 script:
+  - id: ui_apply_tile_positions
+    then:
+      - lambda: |-
+          int page = id(ui_page);
+          if (page < 1 || page > 4) page = 1;
+          lv_obj_t *roots[] = {
+            id(controls_root_1),
+            id(controls_root_2),
+            id(controls_root_3),
+            id(controls_root_4),
+          };
+          for (int i = 0; i < 4; i++) {
+            if (roots[i] == nullptr) continue;
+            lv_obj_clear_flag(roots[i], LV_OBJ_FLAG_HIDDEN);
+            lv_obj_align(roots[i], LV_ALIGN_CENTER, (i + 1 - page) * 800, 0);
+          }
+
   - id: ui_reset_tile_roots
     then:
-      - lvgl.widget.update:
-          id:
-            - controls_root_1
-            - controls_root_2
-            - controls_root_3
-            - controls_root_4
-          align: CENTER
-          x: 0
-          y: 0
+      - script.execute: ui_apply_tile_positions
 
   - id: ui_set_tile_visibility_1
     then:
-      - script.execute: ui_reset_tile_roots
-      - lvgl.widget.show: controls_root_1
-      - lvgl.widget.hide:
-          - controls_root_2
-          - controls_root_3
-          - controls_root_4
+      - globals.set:
+          id: ui_page
+          value: '1'
+      - script.execute: ui_apply_tile_positions
 
   - id: ui_set_tile_visibility_2
     then:
-      - script.execute: ui_reset_tile_roots
-      - lvgl.widget.hide: controls_root_1
-      - lvgl.widget.show: controls_root_2
-      - lvgl.widget.hide:
-          - controls_root_3
-          - controls_root_4
+      - globals.set:
+          id: ui_page
+          value: '2'
+      - script.execute: ui_apply_tile_positions
 
   - id: ui_set_tile_visibility_3
     then:
-      - script.execute: ui_reset_tile_roots
-      - lvgl.widget.hide:
-          - controls_root_1
-          - controls_root_2
-      - lvgl.widget.show: controls_root_3
-      - lvgl.widget.hide: controls_root_4
+      - globals.set:
+          id: ui_page
+          value: '3'
+      - script.execute: ui_apply_tile_positions
 
   - id: ui_set_tile_visibility_4
     then:
-      - script.execute: ui_reset_tile_roots
-      - lvgl.widget.hide:
-          - controls_root_1
-          - controls_root_2
-          - controls_root_3
-      - lvgl.widget.show: controls_root_4
+      - globals.set:
+          id: ui_page
+          value: '4'
+      - script.execute: ui_apply_tile_positions
 
   - id: ui_refresh_tile_snapshots
     mode: restart
     then:
       - delay: 550ms
       - lambda: |-
-          if (id(ui_page) < 1 || id(ui_page) > 4) return;
+          if (id(ui_active_app) != 0 || id(ui_page) < 1 || id(ui_page) > 4) return;
           lvgl_esphome_snapshot_cache_pair(id(controls_root_1), id(controls_root_2), 800);
           lvgl_esphome_snapshot_cache_pair(id(controls_root_2), id(controls_root_3), 800);
           lvgl_esphome_snapshot_cache_pair(id(controls_root_3), id(controls_root_4), 800);
+
+  - id: ui_show_home_page
+    mode: restart
+    then:
+      - lambda: |-
+          int page = id(ui_home_page);
+          if (page < 1 || page > 4) page = 1;
+          id(ui_page) = page;
+          lv_obj_t *roots[] = {
+            id(controls_root_1),
+            id(controls_root_2),
+            id(controls_root_3),
+            id(controls_root_4),
+          };
+          for (int i = 0; i < 4; i++) {
+            if (roots[i] == nullptr) continue;
+            lv_obj_clear_flag(roots[i], LV_OBJ_FLAG_HIDDEN);
+            lv_obj_align(roots[i], LV_ALIGN_CENTER, (i + 1 - page) * 800, 0);
+          }
+          lv_obj_update_layout(lv_obj_get_parent(id(controls_root_1)));
+      - lvgl.page.show:
+          id: controls_page
+          animation: NONE
+          time: 50ms
+
+  - id: ui_prewarm_app_snapshots
+    mode: single
+    then:
+      - script.execute: ui_prepare_player_page
+      - lvgl.page.show:
+          id: music_page
+          animation: NONE
+          time: 50ms
+      - delay: 80ms
+      - lambda: |-
+          lvgl_esphome_snapshot_cache_page(id(wear_root));
+      - script.execute: media_hide_lottie_visual
+      - script.execute: ui_prepare_settings_page
+      - lvgl.page.show:
+          id: settings_page
+          animation: NONE
+          time: 50ms
+      - delay: 80ms
+      - lambda: |-
+          lvgl_esphome_snapshot_cache_page(id(settings_root));
+          lv_obj_clear_flag(id(voice_assistant_overlay), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_update_layout(id(voice_assistant_overlay));
+          lvgl_esphome_snapshot_cache_page(id(voice_assistant_overlay));
+          lv_obj_add_flag(id(voice_assistant_overlay), LV_OBJ_FLAG_HIDDEN);
+      - script.execute: ui_show_tiles_1
+      - lvgl.page.show:
+          id: controls_page
+          animation: NONE
+          time: 50ms
+
+  - id: ui_open_player_app
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(ui_active_app) == 0 &&
+                     (int32_t) (millis() - id(ui_touch_click_block_until_ms)) >= 0;
+          then:
+            - script.stop: ui_refresh_tile_snapshots
+            - lambda: |-
+                if (id(ui_page) >= 1 && id(ui_page) <= 4) id(ui_home_page) = id(ui_page);
+                id(ui_active_app) = 1;
+                id(ui_touch_click_block_until_ms) = millis() + 800;
+            - script.execute: ui_prepare_player_page
+            - lambda: |-
+                lv_obj_t *home = id(controls_root_1);
+                if (id(ui_home_page) == 2) home = id(controls_root_2);
+                else if (id(ui_home_page) == 3) home = id(controls_root_3);
+                else if (id(ui_home_page) == 4) home = id(controls_root_4);
+                lvgl_esphome_snapshot_app_open(id(wear_root), home, 800, 500);
+            - delay: 440ms
+            - lvgl.page.show:
+                id: music_page
+                animation: NONE
+                time: 50ms
+            - delay: 100ms
+
+  - id: ui_open_settings_app
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(ui_active_app) == 0 &&
+                     (int32_t) (millis() - id(ui_touch_click_block_until_ms)) >= 0;
+          then:
+            - script.stop: ui_refresh_tile_snapshots
+            - lambda: |-
+                if (id(ui_page) >= 1 && id(ui_page) <= 4) id(ui_home_page) = id(ui_page);
+                id(ui_active_app) = 2;
+                id(ui_touch_click_block_until_ms) = millis() + 800;
+            - script.execute: ui_prepare_settings_page
+            - lambda: |-
+                lv_obj_t *home = id(controls_root_1);
+                if (id(ui_home_page) == 2) home = id(controls_root_2);
+                else if (id(ui_home_page) == 3) home = id(controls_root_3);
+                else if (id(ui_home_page) == 4) home = id(controls_root_4);
+                lvgl_esphome_snapshot_app_open(id(settings_root), home, 800, 500);
+            - delay: 440ms
+            - lvgl.page.show:
+                id: settings_page
+                animation: NONE
+                time: 50ms
+            - delay: 100ms
+
+  - id: ui_open_voice_app
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(ui_active_app) == 0 &&
+                     (int32_t) (millis() - id(ui_touch_click_block_until_ms)) >= 0;
+          then:
+            - script.stop: ui_refresh_tile_snapshots
+            - lambda: |-
+                if (id(ui_page) >= 1 && id(ui_page) <= 4) id(ui_home_page) = id(ui_page);
+                id(ui_active_app) = 3;
+                id(ui_touch_click_block_until_ms) = millis() + 800;
+                lv_obj_t *home = id(controls_root_1);
+                if (id(ui_home_page) == 2) home = id(controls_root_2);
+                else if (id(ui_home_page) == 3) home = id(controls_root_3);
+                else if (id(ui_home_page) == 4) home = id(controls_root_4);
+                lv_obj_clear_flag(id(voice_assistant_overlay), LV_OBJ_FLAG_HIDDEN);
+                lv_obj_update_layout(id(voice_assistant_overlay));
+                lvgl_esphome_snapshot_app_open(id(voice_assistant_overlay), home, 800, 500);
+                lv_obj_add_flag(id(voice_assistant_overlay), LV_OBJ_FLAG_HIDDEN);
+            - delay: 440ms
+            - if:
+                condition:
+                  switch.is_off: voice_assistant_mute_switch
+                then:
+                  - micro_wake_word.stop:
+                  - lambda: |-
+                      id(voice_assistant_phase) = ${voice_assist_waiting_phase_id};
+                      id(voice_assistant_request_text).publish_state("");
+                      id(voice_assistant_response_text).publish_state("");
+                  - script.execute: display_wake
+                  - script.execute: voice_assistant_update_overlay
+                  - voice_assistant.start:
+                else:
+                  - lambda: |-
+                      id(voice_assistant_phase) = ${voice_assist_error_phase_id};
+                      id(voice_assistant_request_text).publish_state("");
+                      id(voice_assistant_response_text).publish_state("Microphone muted");
+                  - script.execute: display_wake
+                  - script.execute: voice_assistant_update_overlay
+
+  - id: ui_close_app
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return id(ui_active_app) != 0;'
+          then:
+            - lambda: |-
+                lv_obj_t *app = nullptr;
+                if (id(ui_active_app) == 1) app = id(wear_root);
+                else if (id(ui_active_app) == 2) app = id(settings_root);
+                else if (id(ui_active_app) == 3) app = id(voice_assistant_overlay);
+                lv_obj_t *home = id(controls_root_1);
+                if (id(ui_home_page) == 2) home = id(controls_root_2);
+                else if (id(ui_home_page) == 3) home = id(controls_root_3);
+                else if (id(ui_home_page) == 4) home = id(controls_root_4);
+                if (app != nullptr) {
+                  lvgl_esphome_snapshot_app_close(app, home, 800, 400, 200, 500);
+                }
+            - if:
+                condition:
+                  lambda: 'return id(ui_active_app) == 1;'
+                then:
+                  - lvgl.widget.hide:
+                      - media_progress_bar
+                      - volume_overlay
+                      - speaker_group_panel
+            - script.execute: ui_show_home_page
+            - if:
+                condition:
+                  lambda: 'return id(ui_active_app) == 3;'
+                then:
+                  - voice_assistant.stop:
+                  - switch.turn_off: timer_ringing
+                  - lambda: 'id(voice_assistant_phase) = ${voice_assist_idle_phase_id};'
+                  - script.execute: voice_assistant_update_overlay
+            - delay: 440ms
+            - globals.set:
+                id: ui_active_app
+                value: '0'
+            - delay: 100ms
 
   - id: ui_show_tiles_1
     then:
@@ -170,13 +439,7 @@ script:
             - script.execute: media_show_lottie_visual
           else:
             - script.execute: media_hide_lottie_visual
-      - globals.set:
-          id: ui_page
-          value: '1'
-      - script.execute: ui_set_tile_visibility_1
-      - globals.set:
-          id: ui_page
-          value: '0'
+      - script.execute: refresh_progress_bar_from_state
 
   - id: ui_prepare_settings_page
     then:

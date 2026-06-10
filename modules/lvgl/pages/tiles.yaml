@@ -4,6 +4,8 @@ lvgl:
   pages:
     - id: controls_page
       bg_color: 0x05070C
+      scrollable: false
+      scrollbar_mode: "off"
       widgets:
         - obj:
             id: controls_root_1
@@ -265,24 +267,6 @@ lvgl:
                             entity_id: "{{ target }}"
                           data:
                             temperature: "22"
-              - label:
-                  text: ""
-                  align: BOTTOM_MID
-                  y: -56
-                  width: 520
-                  text_align: CENTER
-                  text_color: 0xAEB4C2
-                  text_font: roboto_16
-              - label:
-                  id: perf_label_1
-                  text: ""
-                  align: BOTTOM_MID
-                  y: -24
-                  width: 360
-                  text_align: CENTER
-                  text_color: 0xAEB4C2
-                  text_font: roboto_16
-
         - obj:
             id: controls_root_2
             width: 800
@@ -530,24 +514,6 @@ lvgl:
                         y: -32
                         text_color: 0xC9F6D4
                         text_font: roboto_18
-              - label:
-                  text: ""
-                  align: BOTTOM_MID
-                  y: -56
-                  width: 520
-                  text_align: CENTER
-                  text_color: 0xAEB4C2
-                  text_font: roboto_16
-              - label:
-                  id: perf_label_2
-                  text: ""
-                  align: BOTTOM_MID
-                  y: -24
-                  width: 360
-                  text_align: CENTER
-                  text_color: 0xAEB4C2
-                  text_font: roboto_16
-
         - obj:
             id: controls_root_3
             width: 800
@@ -735,11 +701,7 @@ lvgl:
                         text_font: roboto_18
                   on_click:
                     then:
-                      - script.execute: ui_prepare_player_page
-                      - lvgl.page.show:
-                          id: music_page
-                          animation: MOVE_BOTTOM
-                          time: 250ms
+                      - script.execute: ui_open_player_app
               - button:
                   id: tile_subpage_button
                   x: 414
@@ -772,25 +734,12 @@ lvgl:
                         text_font: roboto_18
                   on_click:
                     then:
-                      - script.execute: ui_show_tiles_4
-              - label:
-                  text: ""
-                  align: BOTTOM_MID
-                  y: -56
-                  width: 560
-                  text_align: CENTER
-                  text_color: 0xAEB4C2
-                  text_font: roboto_16
-              - label:
-                  id: perf_label_3
-                  text: ""
-                  align: BOTTOM_MID
-                  y: -24
-                  width: 360
-                  text_align: CENTER
-                  text_color: 0xAEB4C2
-                  text_font: roboto_16
-
+                      - if:
+                          condition:
+                            lambda: |-
+                              return (int32_t) (millis() - id(ui_touch_click_block_until_ms)) >= 0;
+                          then:
+                            - script.execute: ui_show_tiles_4
         - obj:
             id: controls_root_4
             width: 800
@@ -1005,11 +954,7 @@ lvgl:
                         text_font: roboto_18
                   on_click:
                     then:
-                      - script.execute: ui_prepare_settings_page
-                      - lvgl.page.show:
-                          id: settings_page
-                          animation: MOVE_BOTTOM
-                          time: 220ms
+                      - script.execute: ui_open_settings_app
               - button:
                   id: tile_voice_button
                   x: 414
@@ -1042,42 +987,7 @@ lvgl:
                         text_font: roboto_18
                   on_click:
                     then:
-                      - if:
-                          condition:
-                            switch.is_off: voice_assistant_mute_switch
-                          then:
-                            - micro_wake_word.stop:
-                            - lambda: |-
-                                id(voice_assistant_phase) = ${voice_assist_waiting_phase_id};
-                                id(voice_assistant_request_text).publish_state("");
-                                id(voice_assistant_response_text).publish_state("");
-                            - script.execute: display_wake
-                            - script.execute: voice_assistant_update_overlay
-                            - voice_assistant.start:
-                          else:
-                            - lambda: |-
-                                id(voice_assistant_phase) = ${voice_assist_error_phase_id};
-                                id(voice_assistant_request_text).publish_state("");
-                                id(voice_assistant_response_text).publish_state("Microphone muted");
-                            - script.execute: display_wake
-                            - script.execute: voice_assistant_update_overlay
-              - label:
-                  text: ""
-                  align: BOTTOM_MID
-                  y: -56
-                  width: 520
-                  text_align: CENTER
-                  text_color: 0xAEB4C2
-                  text_font: roboto_16
-              - label:
-                  id: perf_label_4
-                  text: ""
-                  align: BOTTOM_MID
-                  y: -24
-                  width: 360
-                  text_align: CENTER
-                  text_color: 0xAEB4C2
-                  text_font: roboto_16
+                      - script.execute: ui_open_voice_app
         - obj:
             id: screen_tone_overlay_controls
             x: 0

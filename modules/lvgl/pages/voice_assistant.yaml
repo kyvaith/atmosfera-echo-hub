@@ -38,10 +38,7 @@ lvgl:
                                 text_font: material_symbols_24
                         on_click:
                             then:
-                              - voice_assistant.stop:
-                              - switch.turn_off: timer_ringing
-                              - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
-                              - script.execute: voice_assistant_update_overlay
+                              - script.execute: ui_close_app
                   - obj:
                         id: voice_assistant_orb_shell
                         width: 270

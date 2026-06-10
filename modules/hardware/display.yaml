@@ -1,24 +1,25 @@
 # Display, backlight and I2C bus hardware.
 # The LVGL renderer lives in modules/lvgl; this file only describes the electrical display stack.
 output:
-  - platform: ledc
-    id: backlight_output
-    pin: GPIO26
-    frequency: 20000Hz
-    inverted: true
-    # Current backlight circuit drops out at very low PWM duty; tune these
-    # after measuring the panel's real brightness range.
-    min_power: 40%
-    max_power: 100%
-    zero_means_zero: true
+- platform: ledc
+  id: backlight_output
+  pin: GPIO26
+  frequency: 20000Hz
+  inverted: true
+  # GPIO26 drives the panel backlight LED driver with PWM, not an analog
+  # voltage. The current board/display path drops out below roughly 32% duty,
+  # so map the UI brightness slider into the usable electrical range.
+  min_power: 32%
+  max_power: 100%
+  zero_means_zero: true
 
 light:
-  - platform: monochromatic
-    id: display_backlight
-    name: "Display Backlight"
-    output: backlight_output
-    restore_mode: ALWAYS_OFF
-    default_transition_length: 250ms
+- platform: monochromatic
+  id: display_backlight
+  name: "Display Backlight"
+  output: backlight_output
+  restore_mode: ALWAYS_OFF
+  default_transition_length: 250ms
 
 i2c:
   id: touchscreen_bus
@@ -28,24 +29,24 @@ i2c:
   frequency: 400kHz
 
 display:
-  - platform: mipi_dsi
-    id: my_display
-    model: WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-3.4C
-    color_depth: 24
-    pixel_mode: 24
-    draw_rounding: 4
-    pclk_frequency: 48MHz
-    lane_bit_rate: 1.5Gbps
-    use_dma2d: true
-    async_lvgl_flush: true
-    hsync_back_porch: 40
-    hsync_pulse_width: 6
-    hsync_front_porch: 120
-    vsync_back_porch: 12
-    vsync_pulse_width: 4
-    vsync_front_porch: 16
-    reset_pin:
-      number: GPIO27
-      inverted: false
-    update_interval: never
-    auto_clear_enabled: false
+- platform: mipi_dsi
+  id: my_display
+  model: WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-3.4C
+  color_depth: 24
+  pixel_mode: 24
+  draw_rounding: 4
+  pclk_frequency: 48MHz
+  lane_bit_rate: 1.5Gbps
+  use_dma2d: true
+  async_lvgl_flush: true
+  hsync_back_porch: 40
+  hsync_pulse_width: 6
+  hsync_front_porch: 120
+  vsync_back_porch: 12
+  vsync_pulse_width: 4
+  vsync_front_porch: 16
+  reset_pin:
+    number: GPIO27
+    inverted: false
+  update_interval: never
+  auto_clear_enabled: false
