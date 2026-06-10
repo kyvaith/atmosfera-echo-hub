@@ -5,7 +5,8 @@
 /dist/
 /secrets.yaml
 /venv/
-/.tmp/
+/.tmp*
+/logs/
 /_benchmarks/
 /profiles/
 __pycache__/

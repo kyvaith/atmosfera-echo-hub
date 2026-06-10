@@ -62,7 +62,6 @@ psram:
   speed: 200MHz
 
 esp32_jpeg:
-  apply_idf_patches: true
 
 esp_ldo:
   - channel: 3
